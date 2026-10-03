@@ -1,0 +1,29 @@
+{
+  "name": "dhyavora",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": ["frontend", "backend", "packages/contracts"],
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c green,cyan \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "npm --workspace backend run dev",
+    "dev:web": "npm --workspace frontend run dev",
+    "build": "npm run build --workspace @dhyavora/contracts && npm run build --workspace backend && npm run build --workspace frontend",
+    "typecheck": "npm run typecheck --workspace @dhyavora/contracts && npm run typecheck --workspace backend && npm run typecheck --workspace frontend",
+    "test": "npm run test --workspace @dhyavora/contracts && npm run test --workspace backend && npm run test --workspace frontend",
+    "lint": "npm run lint --workspace backend && npm run lint --workspace frontend",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run typecheck && npm test && npm run build",
+    "postinstall": "npm run build --workspace @dhyavora/contracts"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "^1.14.5"
+  },
+  "engines": { "node": ">=22.12", "npm": ">=10" }
+}

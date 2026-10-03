@@ -1,0 +1,16 @@
+node_modules/
+**/node_modules/
+**/dist/
+**/coverage/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.vercel/
+.render/
+.firebase/
+.npm-cache/
+*.log
+*.pem
+service-account*.json
+firebase-adminsdk-*.json
