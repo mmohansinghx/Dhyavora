@@ -1,7 +1,7 @@
 import mongoose, { Schema, type Model } from "mongoose";
 
 const recordSchema = new Schema({
-  userId: { type: String, required: true, index: true },
+  userId: { type: String, required: true },
   title: { type: String, required: true, trim: true, maxlength: 180 },
   data: { type: Schema.Types.Mixed, required: true, default: {} },
   deletedAt: { type: Date, default: null },
