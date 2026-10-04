@@ -22,10 +22,13 @@ const collectionByKind: Record<string, string> = {
 const cache = new Map<string, Model<any>>();
 export function recordModel(kind: string): Model<any> {
   const collection = collectionByKind[kind];
-  if (!collection) throw new Error(`Unknown resource kind: ${kind}`);
-  const modelName = `Dhyavora_${kind.replace(/-/g, "_")}`;
+  if (!collection) throw new Error("Unknown resource kind: " + kind);
+  const modelName = "Dhyavora_" + kind.replace(/-/g, "_");
   if (!cache.has(kind)) {
     const schema = recordSchema.clone();
+    if (kind === "career" || kind === "assessment") {
+      schema.index({ userId: 1, "data.seedKey": 1 }, { unique: true, partialFilterExpression: { "data.seedKey": { $type: "string" } } });
+    }
     if (kind === "profile") schema.index({ userId: 1 }, { unique: true, partialFilterExpression: { deletedAt: null } });
     if (kind === "github-connection") schema.index({ userId: 1 }, { unique: true, partialFilterExpression: { deletedAt: null } });
     cache.set(kind, (mongoose.models[modelName] as Model<any> | undefined) ?? mongoose.model(modelName, schema, collection));
