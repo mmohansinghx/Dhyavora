@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { firebaseAuth } from "../config/firebase.js";
+import { firebaseAdminConfigured } from "../config/env.js";
 
 declare module "express-serve-static-core" {
   interface Request { auth?: { uid: string; email?: string; role?: string } }
@@ -11,7 +12,9 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   if (!authorization?.startsWith("Bearer ")) return res.status(401).json({ success: false, error: { code: "UNAUTHENTICATED", message: "A Firebase ID token is required." } });
   try {
     const token = authorization.slice(7);
-    const decoded = await firebaseAuth.verifyIdToken(token, true);
+    // Signature and project checks use Google's public signing certificates. A
+    // service-account credential is only needed for the optional revocation check.
+    const decoded = await firebaseAuth.verifyIdToken(token, firebaseAdminConfigured());
     req.auth = { uid: decoded.uid, ...(decoded.email ? { email: decoded.email } : {}), ...(typeof decoded.role === "string" ? { role: decoded.role } : {}) };
     next();
   } catch {

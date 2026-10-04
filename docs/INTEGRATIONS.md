@@ -17,14 +17,16 @@ Frontend public web configuration:
 - `VITE_FIREBASE_APP_ID`
 - `VITE_API_BASE_URL`
 
-Backend Admin configuration:
+Backend Firebase Auth verifies ID-token signatures with Google's public signing keys and needs `FIREBASE_PROJECT_ID`. A service account is optional for this verification. Configure these Admin credentials only for revocation checks, user administration, or Firebase Storage:
 
 - `FIREBASE_PROJECT_ID`
 - `FIREBASE_CLIENT_EMAIL`
 - `FIREBASE_PRIVATE_KEY` (store the service account PEM with newlines escaped as `\n`; the server restores the line breaks)
 - `FIREBASE_STORAGE_BUCKET`
 
-Alternatively, configure Application Default Credentials and `GOOGLE_APPLICATION_CREDENTIALS` on a runtime that securely supports the referenced credential file. Enable Email/Password Auth in Firebase Console. Deploy `storage.rules` to the intended Firebase project. Validate auth, token verification, owner scoped CRUD, and a Storage upload against that project before production use.
+Alternatively, configure Application Default Credentials and `GOOGLE_APPLICATION_CREDENTIALS` on a runtime that securely supports the referenced credential file. Enable Email/Password Auth in Firebase Console.
+
+Resume files use Firebase Storage when Admin credentials and a bucket are configured. Otherwise, the API stores them in MongoDB GridFS, so resume uploads work without enabling Firebase Storage billing. Keep MongoDB access restricted and configure backups because resume files contain personal information. To use Firebase Storage, link an eligible billing account, set the Admin credentials, and deploy `storage.rules` to the intended project. Validate sign-in, token verification, owner-scoped CRUD, and a resume upload before production use.
 
 ## AI
 

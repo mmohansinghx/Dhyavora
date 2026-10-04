@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { firebaseAuth } from "../../config/firebase.js";
+import { firebaseAdminConfigured } from "../../config/env.js";
 import { databaseStatus } from "../../config/database.js";
 import { requireAdmin, requireAuth } from "../../middleware/auth.js";
 import { asyncHandler } from "../../shared/asyncHandler.js";
@@ -28,7 +29,7 @@ adminRouter.get("/users", asyncHandler(async (_req, res) => {
 
 adminRouter.patch("/users/:uid/disable", asyncHandler(async (req, res) => {
   const { uid } = z.object({ uid: z.string().trim().min(1).max(128) }).parse(req.params);
-  if (!firebaseAuth) return res.status(503).json({ success: false, error: { code: "FIREBASE_NOT_CONFIGURED", message: "Firebase Admin is required to disable accounts." } });
+  if (!firebaseAuth || !firebaseAdminConfigured()) return res.status(503).json({ success: false, error: { code: "FIREBASE_ADMIN_NOT_CONFIGURED", message: "Firebase Admin credentials are required to disable accounts." } });
   if (uid === req.auth!.uid) return res.status(400).json({ success: false, error: { code: "SELF_DISABLE_FORBIDDEN", message: "Administrators cannot disable their own account." } });
   await firebaseAuth.updateUser(uid, { disabled: true });
   if (databaseStatus().connected) await audit(req.auth!.uid, "user.disabled", uid);

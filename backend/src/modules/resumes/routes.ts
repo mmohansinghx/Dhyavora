@@ -25,7 +25,7 @@ resumeRouter.get("/resumes", requireAuth, asyncHandler(async (req, res) => {
 resumeRouter.post("/resumes", requireAuth, upload.single("file"), asyncHandler(async (req, res) => {
   if (!databaseStatus().connected) return res.status(503).json({ success: false, error: { code: "DATABASE_UNAVAILABLE", message: "MongoDB is not connected." } });
   const storage = resumeStorageProvider();
-  if (!storage) return res.status(503).json({ success: false, error: { code: "STORAGE_NOT_CONFIGURED", message: "Configure Firebase Admin and FIREBASE_STORAGE_BUCKET to upload resumes." } });
+  if (!storage) return res.status(503).json({ success: false, error: { code: "STORAGE_NOT_CONFIGURED", message: "Resume storage is unavailable. Connect MongoDB or configure Firebase Storage." } });
   const file = req.file;
   if (!file) return res.status(400).json({ success: false, error: { code: "FILE_REQUIRED", message: "Choose a PDF or plain text resume file." } });
   if (!parser.supports(file.mimetype)) return res.status(400).json({ success: false, error: { code: "UNSUPPORTED_FILE", message: "The selected resume file type is not supported." } });

@@ -1,5 +1,9 @@
-import "dotenv/config";
+import { config as loadEnv } from "dotenv";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { z } from "zod";
+
+loadEnv({ path: resolve(dirname(fileURLToPath(import.meta.url)), "../../../.env") });
 
 const optional = z.string().optional().transform((value) => value?.trim() || undefined);
 const schema = z.object({

@@ -25,7 +25,8 @@ The root `vercel.json` builds the frontend workspace and serves `frontend/dist`,
 
 - `MONGODB_URI`, `MONGODB_DB_NAME`
 - `FRONTEND_URL`, `API_BASE_URL`, `GITHUB_CALLBACK_URL`
-- `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `FIREBASE_STORAGE_BUCKET`
+- `FIREBASE_PROJECT_ID` (required for Firebase Auth token verification)
+- `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `FIREBASE_STORAGE_BUCKET` only when using Firebase Admin features and Firebase Storage; MongoDB GridFS stores resumes otherwise
 - `TOKEN_ENCRYPTION_KEY`
 - Optional provider variables from [Integrations](INTEGRATIONS.md)
 

@@ -4,7 +4,7 @@ Dhyavora is a career intelligence workspace for students: profile and career goa
 
 ## Current delivery status
 
-The local implementation, provider adapters, application UI, API, contracts, CI configuration, and deployment manifests are in this repository. **This is not yet a live cloud deployment and is not marked production-ready.** This workspace did not expose MongoDB Atlas, Firebase, AI, GitHub OAuth, payment, Vercel, Render, or GitHub repository credentials. Build and local test results do not verify those external services. See [Phase status](docs/PHASE_STATUS.md) and [Deployment](docs/DEPLOYMENT.md).
+The local application is running with MongoDB Atlas, Firebase Email/Password Auth, and MongoDB GridFS resume storage. Smoke checks verified Firebase sign-up, backend ID-token verification, a protected MongoDB read, and a GridFS upload/download round trip; temporary test records were removed. **This is not yet a verified public deployment or production launch.** Firebase Storage billing, AI, GitHub OAuth, payments, and other optional providers are not enabled. See [Phase status](docs/PHASE_STATUS.md) and [Deployment](docs/DEPLOYMENT.md).
 
 ## Stack and layout
 
@@ -22,15 +22,15 @@ The backend uses a modular monolith and shared timestamped Mongoose records mapp
 Requirements: Node.js **22.12 or newer**, npm 10+, Firebase project configuration, and a MongoDB database for persistent workflows.
 
 1. Copy `.env.example` to `.env` and enter local credentials through your secret manager or local environment. Do not commit `.env`.
-2. Configure the Firebase Web values (`VITE_FIREBASE_*`), Firebase Admin values, and `MONGODB_URI` as documented in [Integrations](docs/INTEGRATIONS.md).
+2. Configure the Firebase Web values (`VITE_FIREBASE_*`), `FIREBASE_PROJECT_ID`, and `MONGODB_URI`. A Firebase Admin key is optional for sign-in/token verification and required for account administration or Firebase Storage. Resume files use MongoDB GridFS when Firebase Storage is not configured.
 3. Run `npm ci` and `npm run dev` from this directory.
-4. Frontend: `http://localhost:5173`. Backend: `http://localhost:4000`; `/health` reports liveness and `/ready` requires MongoDB, Firebase Admin, and the MongoDB backed Agenda scheduler.
+4. Frontend: `http://localhost:5173`. Backend: `http://localhost:4000`; `/health` reports liveness and `/ready` requires MongoDB, a Firebase project ID, and the MongoDB-backed Agenda scheduler.
 
 The frontend deliberately shows setup status instead of seeding fake accounts or career data. An administrator with Firebase custom claim `role=admin` can publish catalog items after the services are configured.
 
 ## Checks
 
-Run `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build`. CI runs the same gates on Node 22. Unit and API smoke tests cover the shared contracts, backend non-ready behavior, and a frontend component. The suite does not replace a live Firebase sign-in, Atlas CRUD, Storage upload, OAuth, payment webhook, or end-to-end cloud test. Do not report those as verified until they are exercised against configured services.
+Run `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build`. CI runs the same gates on Node 22. The current workspace has also passed live Firebase Auth and MongoDB GridFS smoke checks. OAuth, payment webhooks, AI providers, Firebase Storage, and a public cloud deployment remain unverified.
 
 ## Main API areas
 
@@ -53,7 +53,7 @@ See source route modules for exact methods and request schemas.
 
 ## Cloud deployment
 
-The repository is prepared for Vercel (frontend), Render (API), MongoDB Atlas (database), Firebase (auth/storage), and GitHub Actions. Deployment is gated by the repository variable `DHYAVORA_DEPLOY_ENABLED=true` and secrets documented in [Deployment](docs/DEPLOYMENT.md). No deploy was run because this workspace has no repository remote, Vercel credentials, Render deploy hook, or production cloud configuration; therefore there are no deployment URLs to report.
+The repository is prepared for Vercel (frontend), Render (API), MongoDB Atlas (database), Firebase Auth, and GitHub Actions. Deployment is gated by the repository variable `DHYAVORA_DEPLOY_ENABLED=true` and secrets documented in [Deployment](docs/DEPLOYMENT.md). No public deployment URL has been verified yet; configure the production environment values and deploy before presenting the project as publicly operational.
 
 ## Branding
 
