@@ -22,7 +22,7 @@ import { errorHandler, notFound } from "./middleware/errors.js";
 import { logger } from "./shared/logger.js";
 import { backgroundJobsStatus } from "./modules/insights/jobs.js";
 
-export function createApp() {
+export function createApp(options: { serverless?: boolean } = {}) {
   const app = express();
   app.disable("x-powered-by");
   app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
@@ -37,8 +37,9 @@ export function createApp() {
     const mongo = databaseStatus();
     const firebase = firebaseStatus();
     const jobs = backgroundJobsStatus();
-    const ready = mongo.connected && firebase.initialized && jobs.started;
-    return res.status(ready ? 200 : 503).json({ success: ready, data: { status: ready ? "READY" : "NOT_READY", mongo: mongo.state, firebaseAuth: firebase.initialized ? "CONNECTED" : "NOT_CONFIGURED", backgroundJobs: jobs.started ? "CONNECTED" : jobs.configured ? "NOT_STARTED" : "NOT_CONFIGURED" } });
+    const schedulerReady = options.serverless || jobs.started;
+    const ready = mongo.connected && firebase.initialized && schedulerReady;
+    return res.status(ready ? 200 : 503).json({ success: ready, data: { status: ready ? "READY" : "NOT_READY", mongo: mongo.state, firebaseAuth: firebase.initialized ? "CONNECTED" : "NOT_CONFIGURED", backgroundJobs: options.serverless ? "DISABLED_SERVERLESS" : jobs.started ? "CONNECTED" : jobs.configured ? "NOT_STARTED" : "NOT_CONFIGURED" } });
   });
 
   app.use("/api/v1", rateLimit({ windowMs: 60_000, limit: 120, standardHeaders: "draft-7", legacyHeaders: false, message: { success: false, error: { code: "RATE_LIMITED", message: "Too many requests. Try again shortly." } } }));
