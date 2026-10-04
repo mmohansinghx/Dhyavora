@@ -6,15 +6,20 @@ import { z } from "zod";
 loadEnv({ path: resolve(dirname(fileURLToPath(import.meta.url)), "../../../.env") });
 
 const optional = z.string().optional().transform((value) => value?.trim() || undefined);
+const vercelOrigin = process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  : process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "http://localhost:5173";
 const schema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(4000),
-  FRONTEND_URL: z.string().url().default("http://localhost:5173"),
-  API_BASE_URL: z.string().url().default("http://localhost:4000"),
+  FRONTEND_URL: z.string().url().default(vercelOrigin),
+  API_BASE_URL: z.string().url().default(vercelOrigin),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
   MONGODB_URI: optional,
   MONGODB_DB_NAME: z.string().default("dhyavora_dev"),
-  FIREBASE_PROJECT_ID: optional,
+  FIREBASE_PROJECT_ID: optional.default(process.env.VITE_FIREBASE_PROJECT_ID ?? ""),
   FIREBASE_STORAGE_BUCKET: optional,
   FIREBASE_CLIENT_EMAIL: optional,
   FIREBASE_PRIVATE_KEY: optional,
