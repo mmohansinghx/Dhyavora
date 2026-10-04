@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { env } from "./env.js";
 import { logger } from "../shared/logger.js";
 import { recordModel, RESOURCE_KINDS } from "../modules/records/model.js";
+import { seedStarterCatalog } from "../modules/records/starter-catalog.js";
 
 export async function connectDatabase(): Promise<void> {
   if (!env.MONGODB_URI) {
@@ -10,6 +11,7 @@ export async function connectDatabase(): Promise<void> {
   }
   await mongoose.connect(env.MONGODB_URI, { dbName: env.MONGODB_DB_NAME, serverSelectionTimeoutMS: 10000, autoIndex: env.NODE_ENV !== "production" });
   await Promise.all(RESOURCE_KINDS.map((kind) => recordModel(kind).createIndexes()));
+  await seedStarterCatalog();
   logger.info({ database: env.MONGODB_DB_NAME }, "MongoDB connected");
 }
 
