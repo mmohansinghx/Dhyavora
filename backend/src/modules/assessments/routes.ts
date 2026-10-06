@@ -61,8 +61,10 @@ assessmentRouter.put("/assessment-attempts/:id/answers/:questionIndex", requireA
   const assessment = await recordModel("assessment").findOne({ _id: data.assessmentId, deletedAt: null }).lean() as { data: { questions: Array<{ options: string[] }> } } | null;
   const target = assessment?.data.questions[params.questionIndex];
   if (!target || (input.selectedOption !== undefined && input.selectedOption >= target.options.length)) return res.status(400).json({ success: false, error: { code: "INVALID_ANSWER", message: "The selected question or option is invalid." } });
+  data.answers = data.answers ?? {};
   data.answers[String(params.questionIndex)] = input;
   attempt.set("data", data);
+  attempt.markModified("data");
   await attempt.save();
   res.json({ success: true, data: { saved: true, answered: input.selectedOption !== undefined, markForReview: input.markForReview } });
 }));
@@ -76,11 +78,12 @@ assessmentRouter.post("/assessment-attempts/:id/submit", requireAuth, asyncHandl
   if (data.status !== "IN_PROGRESS") return res.status(409).json({ success: false, error: { code: "ATTEMPT_CLOSED", message: "This attempt has already been submitted." } });
   const assessment = await recordModel("assessment").findOne({ _id: data.assessmentId, deletedAt: null }).lean() as { data: { negativeMark: number; questions: Array<{ correctOption: number; points: number }> } } | null;
   if (!assessment) return res.status(404).json({ success: false, error: { code: "ASSESSMENT_NOT_FOUND", message: "The assessment definition is unavailable." } });
+  const savedAnswers = data.answers ?? {};
   const elapsedMs = Date.now() - Date.parse(data.startedAt);
   const timedOut = elapsedMs > data.durationMinutes * 60000;
   let correct = 0; let incorrect = 0; let skipped = 0;
   assessment.data.questions.forEach((item, index) => {
-    const answer = data.answers[String(index)];
+    const answer = savedAnswers[String(index)];
     if (answer?.selectedOption === undefined) skipped++;
     else if (answer.selectedOption === item.correctOption) correct++;
     else incorrect++;
@@ -88,12 +91,13 @@ assessmentRouter.post("/assessment-attempts/:id/submit", requireAuth, asyncHandl
   // Negative marks are applied only after the server loads the private assessment definition.
   let score = 0;
   assessment.data.questions.forEach((item, index) => {
-    const answer = data.answers[String(index)];
+    const answer = savedAnswers[String(index)];
     if (answer?.selectedOption === item.correctOption) score += item.points;
     else if (answer?.selectedOption !== undefined) score -= assessment.data.negativeMark;
   });
   data.status = "SUBMITTED";
-  attempt.set("data", { ...data, result: { correct, incorrect, skipped, score: Math.max(0, score), submittedAt: new Date().toISOString(), timedOut } });
+  attempt.set("data", { ...data, answers: savedAnswers, result: { correct, incorrect, skipped, score: Math.max(0, score), submittedAt: new Date().toISOString(), timedOut } });
+  attempt.markModified("data");
   await attempt.save();
   res.json({ success: true, data: { correct, incorrect, skipped, score: Math.max(0, score), questionCount: assessment.data.questions.length, timedOut } });
 }));
