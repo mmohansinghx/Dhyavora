@@ -107,6 +107,7 @@ careerRouter.patch("/roadmaps/:id/tasks/:taskId", requireAuth, asyncHandler(asyn
   task.status = input.status;
   data.completionPercent = data.tasks.length ? Math.round(data.tasks.filter((item) => item.status === "COMPLETED").length * 100 / data.tasks.length) : 100;
   row.set("data", data);
+  row.markModified("data");
   await row.save();
   res.json({ success: true, data: row.toJSON() });
 }));

@@ -8,7 +8,7 @@
     "build": "node ../node_modules/typescript/bin/tsc -p tsconfig.json",
     "typecheck": "node ../node_modules/typescript/bin/tsc --noEmit -p tsconfig.json",
     "start": "node dist/server.js",
-    "test": "npm run build && node --test test/app.test.cjs test/crypto.test.cjs",
+    "test": "npm run build && node --test test/app.test.cjs test/crypto.test.cjs test/records.test.cjs",
     "lint": "node ../node_modules/eslint/bin/eslint.js src test"
   },
   "dependencies": {

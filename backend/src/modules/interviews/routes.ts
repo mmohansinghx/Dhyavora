@@ -52,7 +52,7 @@ interviewRouter.post("/interviews/:id/answer", requireAuth, requireEntitlement("
   catch { return res.status(502).json({ success: false, error: { code: "INVALID_AI_RESPONSE", message: "The AI provider did not return the required structured feedback. Your answer was not saved." } }); }
   current.answer = answer; current.feedback = JSON.stringify({ strengths: feedback.strengths, improvements: feedback.improvements });
   data.questions.push({ prompt: feedback.nextQuestion, answer: null, feedback: null });
-  row.set("data", data); await row.save();
+  row.set("data", data); row.markModified("data"); await row.save();
   res.json({ success: true, data: { feedback: { strengths: feedback.strengths, improvements: feedback.improvements }, nextQuestion: feedback.nextQuestion } });
 }));
 

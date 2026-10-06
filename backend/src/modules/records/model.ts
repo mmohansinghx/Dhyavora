@@ -5,7 +5,7 @@ const recordSchema = new Schema({
   title: { type: String, required: true, trim: true, maxlength: 180 },
   data: { type: Schema.Types.Mixed, required: true, default: {} },
   deletedAt: { type: Date, default: null },
-}, { timestamps: true, strict: "throw", versionKey: false });
+}, { timestamps: true, strict: "throw", versionKey: false, minimize: false });
 recordSchema.index({ userId: 1, updatedAt: -1 });
 recordSchema.index({ "data.providerEventId": 1 }, { unique: true, partialFilterExpression: { "data.providerEventId": { $type: "string" } } });
 
