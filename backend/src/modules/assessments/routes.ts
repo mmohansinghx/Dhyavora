@@ -8,7 +8,7 @@ import { recordModel } from "../records/model.js";
 export const assessmentRouter = Router();
 const oid = z.string().regex(/^[\da-f]{24}$/i);
 const question = z.object({ prompt: z.string().trim().min(2).max(1500), options: z.array(z.string().trim().min(1).max(500)).min(2).max(8), correctOption: z.number().int().nonnegative(), points: z.number().min(0).max(20).default(1) }).refine((item) => item.correctOption < item.options.length, { message: "correctOption must refer to an available option" });
-const assessmentInput = z.object({ title: z.string().trim().min(2).max(180), data: z.object({ description: z.string().max(2000).optional(), durationMinutes: z.number().int().min(1).max(240), negativeMark: z.number().min(0).max(20).default(0), questions: z.array(question).min(1).max(100), careerId: z.string().optional(), active: z.boolean().default(true) }).strict() }).strict();
+const assessmentInput = z.object({ title: z.string().trim().min(2).max(180), data: z.object({ description: z.string().max(2000).optional(), durationMinutes: z.number().int().min(1).max(240), negativeMark: z.number().min(0).max(20).default(0), questions: z.array(question).min(1).max(100), careerId: z.string().optional(), career: z.string().trim().max(120).optional(), company: z.string().trim().max(120).optional(), role: z.string().trim().max(120).optional(), difficulty: z.enum(["Easy", "Medium", "Hard", "Medium → Hard"]).optional(), topics: z.array(z.string().trim().min(1).max(80)).max(20).default([]), assessmentType: z.enum(["MCQ", "Coding", "Debugging", "SQL", "Output prediction", "System Design", "Behavioral/Scenario"]).optional(), active: z.boolean().default(true) }).strict() }).strict();
 
 function unavailable(res: import("express").Response) {
   if (databaseStatus().connected) return false;
@@ -27,8 +27,33 @@ function withoutAnswers<T extends { data?: Record<string, unknown> }>(row: T) {
 
 assessmentRouter.get("/assessments", requireAuth, asyncHandler(async (req, res) => {
   if (unavailable(res)) return;
-  const rows = await recordModel("assessment").find({ deletedAt: null, "data.active": true }).sort({ updatedAt: -1 }).limit(50).lean();
-  res.json({ success: true, data: rows.map((row) => withoutAnswers(row as never)) });
+  const query = z.object({
+    search: z.string().trim().max(120).optional(),
+    company: z.string().trim().max(120).optional(),
+    career: z.string().trim().max(120).optional(),
+    role: z.string().trim().max(120).optional(),
+    difficulty: z.enum(["Easy", "Medium", "Hard", "Medium → Hard"]).optional(),
+    topic: z.string().trim().max(80).optional(),
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(50).default(20),
+  }).parse(req.query);
+  const filter: Record<string, unknown> = { deletedAt: null, "data.active": true };
+  const escape = (value: string) => value.replace(/[.*+?^$()|[\]\\]/g, "\\$&");
+  if (query.company) filter["data.company"] = new RegExp("^" + escape(query.company) + "$", "i");
+  if (query.career) filter["data.career"] = new RegExp("^" + escape(query.career) + "$", "i");
+  if (query.role) filter["data.role"] = new RegExp("^" + escape(query.role) + "$", "i");
+  if (query.difficulty) filter["data.difficulty"] = query.difficulty;
+  if (query.topic) filter["data.topics"] = query.topic;
+  if (query.search) {
+    const re = new RegExp(escape(query.search), "i");
+    filter["$or"] = [{ title: re }, { "data.description": re }, { "data.company": re }, { "data.career": re }, { "data.role": re }, { "data.topics": re }];
+  }
+  const skip = (query.page - 1) * query.limit;
+  const [rows, total] = await Promise.all([
+    recordModel("assessment").find(filter).sort({ updatedAt: -1 }).skip(skip).limit(query.limit).lean(),
+    recordModel("assessment").countDocuments(filter),
+  ]);
+  res.json({ success: true, data: rows.map((row) => withoutAnswers(row as never)), meta: { page: query.page, limit: query.limit, total, pages: Math.ceil(total / query.limit) } });
 }));
 
 assessmentRouter.post("/admin/assessments", requireAuth, requireAdmin, asyncHandler(async (req, res) => {
