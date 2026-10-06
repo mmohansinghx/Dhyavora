@@ -27,13 +27,21 @@ function withoutAnswers<T extends { data?: Record<string, unknown> }>(row: T) {
 
 assessmentRouter.get("/assessments", requireAuth, asyncHandler(async (req, res) => {
   if (unavailable(res)) return;
+  const optionalQueryText = (max: number) => z.preprocess(
+    (value) => typeof value === "string" && value.trim() === "" ? undefined : value,
+    z.string().trim().max(max).optional(),
+  );
+  const optionalDifficulty = z.preprocess(
+    (value) => typeof value === "string" && value.trim() === "" ? undefined : value,
+    z.enum(["Easy", "Medium", "Hard", "Medium → Hard"]).optional(),
+  );
   const query = z.object({
-    search: z.string().trim().max(120).optional(),
-    company: z.string().trim().max(120).optional(),
-    career: z.string().trim().max(120).optional(),
-    role: z.string().trim().max(120).optional(),
-    difficulty: z.enum(["Easy", "Medium", "Hard", "Medium → Hard"]).optional(),
-    topic: z.string().trim().max(80).optional(),
+    search: optionalQueryText(120),
+    company: optionalQueryText(120),
+    career: optionalQueryText(120),
+    role: optionalQueryText(120),
+    difficulty: optionalDifficulty,
+    topic: optionalQueryText(80),
     page: z.coerce.number().int().min(1).default(1),
     limit: z.coerce.number().int().min(1).max(50).default(20),
   }).parse(req.query);
