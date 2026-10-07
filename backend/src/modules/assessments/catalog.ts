@@ -1,4 +1,5 @@
 export const VIRTUAL_ASSESSMENT_COUNT = 100_000;
+export const COMPANY_QUESTION_BANK_SIZE = 600;
 
 export type VirtualAssessment = {
   _id: string;
@@ -19,7 +20,7 @@ export type VirtualAssessment = {
     blueprint: { focus: Array<{ topic: string; weight: number }>; emphasis: string };
     active: true;
     virtual: true;
-    questions: Array<{ id: string; prompt: string; options: string[]; correctOption: number; points: number }>;
+    questions: Array<{ id: string; prompt: string; options: string[]; correctOption: number; points: number; questionType: "Coding" | "SQL" | "Debugging" | "System Design"; section: string }>;
   };
 };
 
@@ -246,6 +247,122 @@ const COMPANY_PROFILES: Record<string, CompanyProfile> = {
 };
 
 type QuestionSeed = { prompt: string; options: string[]; correctOption: number; points: number };
+type QuestionType = "Coding" | "SQL" | "Debugging" | "System Design";
+
+function questionTypeForTopic(topic: AssessmentTopic): QuestionType {
+  if (topic === "SQL") return "SQL";
+  if (topic === "Debugging" || topic === "Testing") return "Debugging";
+  if (topic === "System Design" || topic === "Cloud" || topic === "APIs") return "System Design";
+  return "Coding";
+}
+
+function specializedRoundTracks(profile: CompanyProfile): AssessmentTrack[] {
+  return [
+    { name: "Coding Round", round: "Coding round", focus: ["DSA", "JavaScript", "Python"], emphasis: "algorithmic problem solving, edge cases and maintainable implementation in a " + profile.domain + " setting", durationMinutes: 75 },
+    { name: "SQL & Data Round", round: "SQL round", focus: ["SQL"], emphasis: "query reasoning, joins, aggregation, data correctness and performance for a " + profile.domain + " workload", durationMinutes: 50 },
+    { name: "Debugging & Reliability Round", round: "Debugging round", focus: ["Debugging", "Testing", "APIs"], emphasis: "root-cause analysis, regression prevention, async failures and reliable service behavior in a " + profile.domain + " environment", durationMinutes: 50 },
+  ];
+}
+
+function generatedQuestion(
+  questionIndex: number,
+  topic: AssessmentTopic,
+  company: string,
+  profile: CompanyProfile,
+  track: AssessmentTrack,
+  difficulty: string,
+): { prompt: string; options: string[]; correctOption: number; points: number; questionType: QuestionType; section: string } {
+  const type = questionTypeForTopic(topic);
+  const seedBank = QUESTION_BANKS[topic];
+  const seed = seedBank?.[questionIndex % (seedBank.length || 1)];
+  const n = 10 + (questionIndex % 91);
+  const m = 3 + ((questionIndex * 7) % 17);
+  const service = ["catalog", "orders", "payments", "recommendations", "identity", "search"][questionIndex % 6]!;
+  const prefix = `${company}'s ${profile.domain} context: `;
+  let prompt = seed?.prompt ?? "Choose the most appropriate engineering approach.";
+  let options = seed?.options ? [...seed.options] : ["Option A", "Option B", "Option C", "Option D"];
+  let correctOption = seed?.correctOption ?? 0;
+
+  if (type === "Coding") {
+    const codingTemplates = [
+      `A ${service} service receives an array of ${n} request times. Which approach best finds the first duplicate in one pass with expected O(n) time?`,
+      `A ${service} pipeline has ${n} records and needs the top ${m} values without fully sorting the input. Which structure is the best fit?`,
+      `A ${service} endpoint must validate a sequence of ${m + 2} nested tokens. Which approach guarantees linear-time validation?`,
+      `A ${service} cache stores ${n} keys and must evict the least recently used key. Which design gives O(1) average lookup and eviction?`,
+      `A ${service} graph has ${n} nodes and non-negative weighted edges. Which algorithm finds single-source shortest paths efficiently?`,
+      `A ${service} API sorts ${n} items by a key and must preserve the relative order of equal keys. Which property matters?`,
+      `A ${service} workflow has overlapping subproblems across ${n} states. Which technique avoids recomputing the same states?`,
+      `A ${service} dependency graph contains ${n} modules. Which technique detects whether dependencies can be processed in a valid order?`,
+    ];
+    prompt = codingTemplates[questionIndex % codingTemplates.length]!;
+    options = [
+      "Hash table / appropriate indexed structure",
+      "Nested loops over every pair",
+      "Randomized retry loop",
+      "Full recomputation for every item",
+    ];
+    correctOption = 0;
+    if (questionIndex % 8 === 1) {
+      options = ["Min/max heap with O(n log k)", "Bubble sort with O(n²)", "Queue scan with O(nk)", "Hash collision chain"];
+    } else if (questionIndex % 8 === 2) {
+      options = ["Stack", "Queue", "Binary search tree", "Hash set"];
+      correctOption = 0;
+    } else if (questionIndex % 8 === 4) {
+      options = ["Dijkstra", "DFS only", "Kruskal only", "BFS on weighted edges"];
+      correctOption = 0;
+    }
+  } else if (type === "SQL") {
+    const sqlTemplates = [
+      `The ${service} table has ${n * 1000} rows. You need one row per customer with only customers whose total value exceeds ${m * 100}. Which SQL pattern is correct?`,
+      `A ${service} query joins a fact table with a dimension table and unexpectedly multiplies rows. What should you verify first?`,
+      `A ${service} report filters grouped results after aggregation. Which clause belongs after GROUP BY?`,
+      `A ${service} lookup repeatedly filters on customer_id and created_at. Which index shape is generally most useful for the combined predicate?`,
+      `A ${service} pipeline must rank each customer's events by timestamp without collapsing the rows. Which SQL feature is most appropriate?`,
+      `A ${service} report needs rows present in the left table even when no matching right-side record exists. Which JOIN is appropriate?`,
+      `A ${service} transaction must not read another transaction's uncommitted changes. Which isolation level provides that guarantee?`,
+      `A ${service} cleanup removes duplicate logical records while keeping one canonical row. Which technique is most suitable?`,
+    ];
+    prompt = sqlTemplates[questionIndex % sqlTemplates.length]!;
+    options = ["Use the SQL construct that preserves row semantics and applies the filter at the correct stage", "Move every condition into ORDER BY", "Use CROSS JOIN for every relationship", "Replace SQL with a client-side loop"];
+    correctOption = 0;
+    if (questionIndex % 8 === 2) options = ["HAVING", "WHERE", "ORDER BY", "LIMIT"], correctOption = 0;
+    if (questionIndex % 8 === 3) options = ["Composite index on the filtered columns in predicate order", "Drop all indexes", "Full scan is always faster", "Create a random single-column index"], correctOption = 0;
+    if (questionIndex % 8 === 4) options = ["Window function", "GROUP BY only", "DISTINCT only", "UNION ALL"], correctOption = 0;
+    if (questionIndex % 8 === 5) options = ["LEFT JOIN", "INNER JOIN", "CROSS JOIN", "FULL DELETE"], correctOption = 0;
+    if (questionIndex % 8 === 6) options = ["Read committed", "Read uncommitted", "No isolation", "Read only"], correctOption = 0;
+    if (questionIndex % 8 === 7) options = ["ROW_NUMBER() over a partition, then keep one row", "CROSS JOIN and delete randomly", "ORDER BY without partitioning", "COUNT() without a key"], correctOption = 0;
+  } else if (type === "Debugging") {
+    const debugTemplates = [
+      `After a deployment, ${service} requests intermittently fail only under parallel load. What should you investigate first?`,
+      `A ${service} test passes locally but fails in CI with stale state. What is the strongest first debugging move?`,
+      `A React client for ${service} shows repeated requests after a state update. Which investigation is most relevant?`,
+      `An async ${service} handler sometimes returns before its dependency finishes. What is the likely class of defect?`,
+      `A ${service} API retries rapidly when the downstream is slow, increasing the outage. Which mitigation addresses the failure mode?`,
+      `A ${service} bug appears only at the final item in a list of ${n}. What class of defect should you inspect first?`,
+      `A ${service} endpoint starts consuming memory after every request. Which evidence is most useful to collect?`,
+      `A ${service} change fixes the visible symptom but the same failure reappears through another path. What principle was missed?`,
+    ];
+    prompt = debugTemplates[questionIndex % debugTemplates.length]!;
+    options = ["Capture a minimal reproduction, relevant logs/state, and isolate the failing dependency", "Disable all tests", "Retry endlessly", "Delete the feature before observing it"];
+    correctOption = 0;
+    if (questionIndex % 8 === 3) options = ["Missing await / incorrect async control flow", "CSS specificity", "Database normalization", "Hash collision"], correctOption = 0;
+    if (questionIndex % 8 === 4) options = ["Backoff + bounded retries / circuit breaking", "Infinite retries", "Remove timeouts", "Ignore downstream health"], correctOption = 0;
+    if (questionIndex % 8 === 5) options = ["Off-by-one / boundary condition", "DNS caching", "SQL normalization", "Font loading"], correctOption = 0;
+    if (questionIndex % 8 === 6) options = ["Heap/profile data and request-lifecycle evidence", "Only a screenshot", "CSS source map only", "Browser history"], correctOption = 0;
+    if (questionIndex % 8 === 7) options = ["Fix the root cause", "Hide the error message", "Remove observability", "Add random delays"], correctOption = 0;
+  }
+
+  const level = difficulty === "Hard" || difficulty === "Medium → Hard" ? 2 : 1;
+  return {
+    prompt: prefix + prompt + ` This is an original Dhyavora ${track.name} question; it is not copied from a company test.`,
+    options,
+    correctOption,
+    points: level,
+    questionType: type,
+    section: track.name,
+  };
+}
+
 
 const QUESTION_BANKS: Record<string, QuestionSeed[]> = {
   DSA: [
@@ -364,28 +481,20 @@ function valuesForIndex(index: number) {
   const career = CAREERS[Math.floor(index / COMPANIES.length) % CAREERS.length]!;
   const role = ROLES[Math.floor(index / (COMPANIES.length * CAREERS.length)) % ROLES.length]!;
   const difficulty = DIFFICULTIES[Math.floor(index / (COMPANIES.length * CAREERS.length * ROLES.length)) % DIFFICULTIES.length]!;
-  const trackPool = profile.tracks;
+  const trackPool = [...profile.tracks, ...specializedRoundTracks(profile)];
   const track = trackPool[Math.floor(index / (COMPANIES.length * CAREERS.length * ROLES.length * DIFFICULTIES.length)) % trackPool.length]!;
   const variant = Math.floor(index / (COMPANIES.length * CAREERS.length * ROLES.length * DIFFICULTIES.length * trackPool.length)) + 1;
   return { company, profile, career, role, difficulty, track, variant };
 }
 
-
 export function getVirtualAssessment(index: number): VirtualAssessment {
   const { company, profile, career, role, difficulty, track, variant } = valuesForIndex(index);
-  const focus = track.focus;
+  const topics = track.focus;
   const questions = Array.from({ length: 10 }, (_, qIndex) => {
-    const topic = focus[qIndex % focus.length]!;
-    const bank = QUESTION_BANKS[topic];
-    if (!bank?.length) throw new Error(`Missing question bank for ${topic}`);
-    const source = bank[((index * 7) + (qIndex * 3)) % bank.length]!;
-    const context = `The ${company} ${profile.domain} environment uses a scenario related to ${track.name.toLowerCase()}.`;
+    const topic = topics[qIndex % topics.length]!;
     return {
       id: String(qIndex),
-      prompt: `${context} ${source.prompt}`,
-      options: [...source.options],
-      correctOption: source.correctOption,
-      points: difficulty === "Hard" || difficulty === "Medium → Hard" ? 2 : 1,
+      ...generatedQuestion(variant * 11 + qIndex, topic, company, profile, track, difficulty),
     };
   });
   return {
@@ -393,28 +502,28 @@ export function getVirtualAssessment(index: number): VirtualAssessment {
     title: `${company} · ${role} · ${track.name} · ${difficulty} · Set ${String(variant).padStart(4, "0")}`,
     data: {
       description: `Original Dhyavora ${profile.domain} preparation simulation for ${career} / ${role}. Track: ${track.round}. Focus: ${track.emphasis}. This is an original simulation, not a leaked or copied company test.`,
-      durationMinutes: Math.max(25, track.durationMinutes - (difficulty === "Easy" ? 10 : difficulty === "Medium" ? 0 : difficulty === "Hard" ? -10 : -5)),
+      durationMinutes: Math.max(30, track.durationMinutes - (difficulty === "Easy" ? 10 : difficulty === "Hard" ? -10 : difficulty === "Medium → Hard" ? -5 : 0)),
       negativeMark: difficulty === "Hard" || difficulty === "Medium → Hard" ? 0.25 : 0,
       career,
       company,
       role,
       difficulty,
-      topics: [...focus],
+      topics: [...topics],
       assessmentType: "MCQ",
       active: true,
       virtual: true,
-      questions,
       assessmentTrack: track.name,
       assessmentRound: track.round,
       companyDomain: profile.domain,
+      questionBankSize: COMPANY_QUESTION_BANK_SIZE,
       blueprint: {
-        focus: focus.map((topic, focusIndex) => ({ topic, weight: focusIndex === 0 ? 50 : Math.floor(50 / Math.max(1, focus.length - 1)) })),
+        focus: topics.map((topic, focusIndex) => ({ topic, weight: focusIndex === 0 ? 50 : Math.floor(50 / Math.max(1, topics.length - 1)) })),
         emphasis: track.emphasis,
       },
+      questions,
     },
   };
 }
-
 
 export function virtualAssessmentMeta(index: number) {
   const item = getVirtualAssessment(index);
