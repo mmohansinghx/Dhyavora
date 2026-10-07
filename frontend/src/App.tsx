@@ -289,7 +289,11 @@ function AssessmentPage() {
             <div className="record-card-top"><span className="record-icon coral-text"><ClipboardCheck size={16} /></span><span className="duration-pill">{item.data.durationMinutes} min</span></div>
             <h3>{item.title}</h3>
             <p>{item.data.description ?? "Focused preparation for your target role."}</p>
-            <div className="record-meta">{item.data.company && <span>{item.data.company}</span>}{item.data.career && <span>{item.data.career}</span>}{item.data.role && <span>{item.data.role}</span>}{item.data.difficulty && <span>{item.data.difficulty}</span>}</div>
+            <div className="record-meta">{item.data.company && <span>{item.data.company}</span>}{item.data.career && <span>{item.data.career}</span>}{item.data.role && <span>{item.data.role}</span>}{item.data.difficulty && <span>{item.data.difficulty}</span>}{item.data.assessmentTrack && <span>{item.data.assessmentTrack}</span>}</div>
+            <div className="assessment-ladder" aria-label={`Difficulty progression: Easy, Medium, Hard, Medium to Hard`}>
+              {["Easy", "Medium", "Hard", "Medium → Hard"].map((level) => <span key={level} className={`assessment-step ${level === item.data.difficulty ? "active" : ""}`} title={level}>{level === item.data.difficulty ? "●" : "○"}</span>)}
+              <small>{item.data.assessmentRound ?? "Technical simulation"}</small>
+            </div>
             {item.data.topics?.length ? <div className="skill-pills">{item.data.topics.slice(0, 5).map((topic) => <span className="skill-pill" key={topic}>{topic}</span>)}</div> : null}
             <button className="button button-soft button-small" onClick={() => start.mutate(item._id)} disabled={start.isPending}>{start.isPending ? "Starting…" : "Start simulation"}<ArrowRight size={14} /></button>
           </motion.article>)}
