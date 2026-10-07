@@ -16,7 +16,7 @@ function unavailable(res: import("express").Response) {
   res.status(503).json({ success: false, error: { code: "DATABASE_UNAVAILABLE", message: "MongoDB is not connected." } });
   return true;
 }
-const assessmentIdSchema = z.string().refine((value) => oid.test(value) || isVirtualAssessmentId(value), { message: "Invalid assessment id" });
+const assessmentIdSchema = z.string().refine((value) => /^[\da-f]{24}$/i.test(value) || isVirtualAssessmentId(value), { message: "Invalid assessment id" });
 
 async function findAssessmentDefinition(id: string) {
   const virtualIndex = virtualIndexFromId(id);
