@@ -2,11 +2,12 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { Activity, ArrowRight, ArrowUpRight, Bell, BriefcaseBusiness, Check, CheckCircle2, ChevronDown, CircleHelp, ClipboardCheck, Clock, Code2, Compass, FileText, Flag, GraduationCap, LayoutDashboard, LogOut, Menu, MessageCircle, Plus, Search, Send, Settings, ShieldAlert, Sparkles, Target, TrendingUp, Users, X } from "lucide-react";
-import { type CareerMatch, type ReadinessSummary, type Skill, type SkillGapItem, type SkillLeverage } from "@dhyavora/contracts";
+import { Activity, ArrowRight, ArrowUpRight, Bell, BriefcaseBusiness, Check, CheckCircle2, ChevronDown, CircleHelp, ClipboardCheck, Code2, Compass, FileText, GraduationCap, LayoutDashboard, LogOut, Menu, MessageCircle, Plus, Search, Send, Settings, ShieldAlert, Sparkles, Target, Users, X } from "lucide-react";
+import { type Skill, type SkillGapItem } from "@dhyavora/contracts";
 import { api } from "./api";
 import { useAuth } from "./auth";
 import { SkillPill } from "./ui";
+import { CareerIntelligence } from "./CareerIntelligence";
 
 type Row = { _id: string; title: string; data: Record<string, any>; createdAt?: string; updatedAt?: string; author?: string };
 type Career = Row;
@@ -84,7 +85,7 @@ function Workspace() {
       <div className="sidebar-bottom"><div className="sidebar-help"><div className="help-icon"><CircleHelp size={17} /></div><div><strong>A thoughtful pace</strong><p>Your path can change as you do.</p></div></div><button className="nav-link logout-link" onClick={logout}><LogOut size={17} /><span>Sign out</span></button><div className="sidebar-version">DHYAVORA <span>•</span> PRIVATE BETA</div></div>
     </aside>
     <main className="main-area"><header className="topbar"><button className="icon-button menu-toggle" onClick={() => setSidebarOpen(true)} aria-label="Open menu"><Menu size={19} /></button><div className="breadcrumbs"><span>Workspace</span><span className="crumb-sep">/</span><strong>{navSections.flatMap((section) => section.items).find(([to]) => to === location.pathname)?.[1] ?? "Today"}</strong></div><div className="topbar-actions"><button className="icon-button notification-button" aria-label="Notifications"><Bell size={18} /><i /></button><button className="top-avatar" title={user?.email ?? "Account"}>{name.slice(0, 1).toUpperCase()}</button></div></header>
-      <div className="page-frame"><Routes><Route path="/" element={<DashboardPage name={name} />} /><Route path="/career" element={<CareerPage />} /><Route path="/assessments" element={<AssessmentPage />} /><Route path="/interviews" element={<InterviewPage />} /><Route path="/projects" element={<ResourcePage kind="project" title="Projects" kicker="SHOW YOUR WORK" description="Turn what you learn into evidence you can point to." fields={[["description", "What are you building?"], ["skills", "Skills (comma separated)"], ["technologies", "Technologies"], ["repositoryUrl", "Repository URL"], ["liveUrl", "Live project URL"]]} />} /><Route path="/learning" element={<LearningPage />} /><Route path="/resume" element={<ResumePage />} /><Route path="/opportunities" element={<ResourcePage kind="opportunity" title="Opportunities" kicker="FIND YOUR OPENING" description="Save the opportunities you discover and keep the source attached." fields={[["organization", "Organization"], ["sourceUrl", "Original listing URL"], ["category", "Type (internship, job, scholarship…)"], ["deadline", "Deadline (optional)"]]} />} /><Route path="/applications" element={<ResourcePage kind="application" title="Applications" kicker="KEEP MOMENTUM" description="Track each application and its next important date." fields={[["organization", "Organization"], ["status", "Status (saved, applied, interview, offer, rejected, withdrawn)"], ["deadline", "Next date (optional)"], ["notes", "Notes"]]} />} /><Route path="/analytics" element={<AnalyticsPage />} /><Route path="/mentorship" element={<MentorshipPage />} /><Route path="/community" element={<CommunityPage />} /><Route path="/copilot" element={<CopilotPage />} /><Route path="/profile" element={<ProfilePage />} /><Route path="/settings" element={<SettingsPage />} /><Route path="/admin" element={<AdminPage />} /><Route path="*" element={<Navigate to="/" replace />} /></Routes></div>
+      <div className="page-frame"><Routes><Route path="/" element={<DashboardPage name={name} />} /><Route path="/career" element={<CareerIntelligence view="overview" />} /><Route path="/career/explore" element={<CareerIntelligence view="explore" />} /><Route path="/career/skill-gap" element={<CareerIntelligence view="skill-gap" />} /><Route path="/career/roadmap" element={<CareerIntelligence view="roadmap" />} /><Route path="/career/progress" element={<CareerIntelligence view="progress" />} /><Route path="/career/readiness" element={<CareerIntelligence view="readiness" />} /><Route path="/career/:careerId" element={<CareerIntelligence view="detail" />} /><Route path="/assessments" element={<AssessmentPage />} /><Route path="/interviews" element={<InterviewPage />} /><Route path="/projects" element={<ResourcePage kind="project" title="Projects" kicker="SHOW YOUR WORK" description="Turn what you learn into evidence you can point to." fields={[["description", "What are you building?"], ["skills", "Skills (comma separated)"], ["technologies", "Technologies"], ["repositoryUrl", "Repository URL"], ["liveUrl", "Live project URL"]]} />} /><Route path="/learning" element={<LearningPage />} /><Route path="/resume" element={<ResumePage />} /><Route path="/opportunities" element={<ResourcePage kind="opportunity" title="Opportunities" kicker="FIND YOUR OPENING" description="Save the opportunities you discover and keep the source attached." fields={[["organization", "Organization"], ["sourceUrl", "Original listing URL"], ["category", "Type (internship, job, scholarship…)"], ["deadline", "Deadline (optional)"]]} />} /><Route path="/applications" element={<ResourcePage kind="application" title="Applications" kicker="KEEP MOMENTUM" description="Track each application and its next important date." fields={[["organization", "Organization"], ["status", "Status (saved, applied, interview, offer, rejected, withdrawn)"], ["deadline", "Next date (optional)"], ["notes", "Notes"]]} />} /><Route path="/analytics" element={<AnalyticsPage />} /><Route path="/mentorship" element={<MentorshipPage />} /><Route path="/community" element={<CommunityPage />} /><Route path="/copilot" element={<CopilotPage />} /><Route path="/profile" element={<ProfilePage />} /><Route path="/settings" element={<SettingsPage />} /><Route path="/admin" element={<AdminPage />} /><Route path="*" element={<Navigate to="/" replace />} /></Routes></div>
     </main>
   </div>;
 }
@@ -114,130 +115,6 @@ function DashboardPage({ name }: { name: string }) {
     <section className="surface-card progress-card"><div className="card-heading"><div><div className="eyebrow">CAREER SNAPSHOT</div><h2>{gap.data?.career?.title ?? "Your personal growth map"}</h2></div><Link to="/career" className="text-action">Open career path <ArrowRight size={15} /></Link></div>
       {gap.isLoading ? <LoadingLine /> : gap.data?.gap?.length ? <><div className="coverage-bar"><span style={{ width: `${gap.data.coverage}%` }} /></div><div className="skill-row">{gap.data.gap.slice(0, 6).map((item) => <SkillPill key={item.name} item={item} />)}</div></> : <EmptyState title="Your career map takes shape here" text="Add your skills and choose a career to see the shared skill-gap engine at work." action={<Link to="/career" className="text-action">Set a target career <ArrowRight size={14} /></Link>} />}</section>
     <div className="dashboard-bottom"><Link to="/assessments" className="quick-card"><div className="quick-icon coral"><ClipboardCheck size={18} /></div><div><strong>Check your skills</strong><span>Take an assessment</span></div><ArrowUpRight size={15} /></Link><Link to="/opportunities" className="quick-card"><div className="quick-icon blue"><Search size={18} /></div><div><strong>Find an opening</strong><span>Save an opportunity</span></div><ArrowUpRight size={15} /></Link><Link to="/copilot" className="quick-card"><div className="quick-icon violet"><Sparkles size={18} /></div><div><strong>Think it through</strong><span>Ask your career copilot</span></div><ArrowUpRight size={15} /></Link></div>
-  </>;
-}
-
-const LEVEL_ORDER = ["BEGINNER", "INTERMEDIATE", "ADVANCED", "EXPERT"] as const;
-const PHASES = [
-  { key: "FOUNDATION", label: "Foundation", hint: "Learn the core ideas" },
-  { key: "BUILD", label: "Build", hint: "Practise on real problems" },
-  { key: "PROVE", label: "Prove", hint: "Show evidence of the skill" },
-] as const;
-const STATUS_STEPS = [["TODO", "To do"], ["IN_PROGRESS", "In progress"], ["COMPLETED", "Done"]] as const;
-type GapPayload = { career?: Career; gap: SkillGapItem[]; coverage: number; readiness?: ReadinessSummary };
-type MatchesPayload = { matches: CareerMatch[]; leverage?: SkillLeverage[]; reason?: string };
-const HOURS_PER_LEVEL_STEP = 24;
-const LEVEL_LABEL: Record<string, string> = { NONE: "Not started", BEGINNER: "Beginner", INTERMEDIATE: "Intermediate", ADVANCED: "Advanced", EXPERT: "Expert" };
-
-function ReadinessRing({ value }: { value: number }) {
-  const radius = 44; const circumference = 2 * Math.PI * radius;
-  return <div className="readiness-ring" role="img" aria-label={`${value}% ready`}><svg viewBox="0 0 108 108"><circle cx="54" cy="54" r={radius} className="ring-track" /><circle cx="54" cy="54" r={radius} className="ring-value" strokeDasharray={circumference} strokeDashoffset={circumference * (1 - Math.min(100, Math.max(0, value)) / 100)} transform="rotate(-90 54 54)" /></svg><div><strong>{value}%</strong><span>ready</span></div></div>;
-}
-
-function LevelMeter({ item }: { item: SkillGapItem }) {
-  const current = item.currentLevel ? LEVEL_ORDER.indexOf(item.currentLevel) + 1 : 0; const required = LEVEL_ORDER.indexOf(item.requiredLevel) + 1;
-  return <div className="level-meter" aria-label={`Current ${item.currentLevel ?? "none"}, required ${item.requiredLevel}`}>{LEVEL_ORDER.map((level, index) => <span key={level} title={level.toLowerCase()} className={`${index < current ? "have" : ""} ${index + 1 === required ? "target" : ""}`} />)}</div>;
-}
-
-function CareerPage() {
-  const careers = useQuery({ queryKey: ["careers"], queryFn: () => api.get<Career[]>("/careers"), retry: false });
-  const matches = useQuery({ queryKey: ["career-matches"], queryFn: () => api.get<MatchesPayload>("/careers/matches"), retry: false });
-  const profileQuery = useProfile(); const profile = readProfile(profileQuery.data); const selected = profile?.data?.targetCareerId as string | undefined;
-  const gap = useQuery({ queryKey: ["skill-gap", selected], queryFn: () => api.get<GapPayload>(`/skill-gap${selected ? `?careerId=${selected}` : ""}`), enabled: Boolean(selected), retry: false });
-  const roadmap = useRecords("roadmap"); const qc = useQueryClient();
-  const [q, setQ] = useState(""); const [category, setCategory] = useState("All"); const [view, setView] = useState<"matches" | "all">("matches"); const [pace, setPace] = useState(8); const [busyTask, setBusyTask] = useState(""); const [sim, setSim] = useState<Set<string>>(new Set());
-  const refresh = () => { void qc.invalidateQueries({ queryKey: ["records", "roadmap"] }); void qc.invalidateQueries({ queryKey: ["skill-gap"] }); void qc.invalidateQueries({ queryKey: ["career-matches"] }); };
-  const choose = useMutation({ mutationFn: (careerId: string) => api.post("/career/target", { careerId }), onSuccess: () => { setSim(new Set()); void qc.invalidateQueries({ queryKey: ["records", "profile"] }); refresh(); void qc.invalidateQueries({ queryKey: ["careers"] }); } });
-  const saveLevel = useMutation({
-    mutationFn: async ({ name, level }: { name: string; level: Skill["level"] | "NONE" }) => {
-      const skills: Skill[] = ((profile?.data?.skills ?? []) as Skill[]).filter((skill) => skill.name.trim().toLowerCase() !== name.trim().toLowerCase());
-      if (level !== "NONE") skills.push({ name, level });
-      const data = { ...(profile?.data ?? {}), skills };
-      return profile ? api.patch(`/resources/profile/${profile._id}`, { title: "Career profile", data }) : api.post("/resources/profile", { title: "Career profile", data });
-    },
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ["records", "profile"] }); refresh(); },
-  });
-  const generate = useMutation({ mutationFn: () => api.post("/roadmaps/generate", { careerId: selected, hoursPerWeek: pace }), onSuccess: refresh });
-  async function updateTask(roadmapId: string, taskId: string, status: string) { setBusyTask(taskId); try { await api.patch(`/roadmaps/${roadmapId}/tasks/${taskId}`, { status }); await qc.invalidateQueries({ queryKey: ["records", "roadmap"] }); } finally { setBusyTask(""); } }
-
-  const categories = ["All", ...Array.from(new Set((careers.data ?? []).map((career) => String(career.data.category ?? "")).filter(Boolean)))];
-  const matchById = new Map((matches.data?.matches ?? []).map((match) => [match.careerId, match]));
-  const filtered = (careers.data ?? []).filter((career) => career.title.toLowerCase().includes(q.toLowerCase()) && (category === "All" || career.data.category === category));
-  const rankedMatches = (matches.data?.matches ?? []).filter((match) => match.title.toLowerCase().includes(q.toLowerCase()) && (category === "All" || match.category === category));
-  const activeRoadmap = roadmap.data?.find((row) => row.data.careerId === selected);
-  const tasks: any[] = activeRoadmap?.data.tasks ?? [];
-  const done = tasks.filter((task) => task.status === "COMPLETED").length;
-  const remainingHours = tasks.filter((task) => task.status !== "COMPLETED").reduce((sum, task) => sum + (task.estimateHours ?? 0), 0);
-  const livePace = activeRoadmap?.data.hoursPerWeek ?? pace;
-  const weeksLeft = remainingHours > 0 ? Math.ceil(remainingHours / livePace) : 0;
-  const finishDate = weeksLeft ? new Date(Date.now() + weeksLeft * 7 * 86400000).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : null;
-  const nextTask = tasks.find((task) => task.status === "IN_PROGRESS") ?? tasks.find((task) => task.status !== "COMPLETED");
-  const readiness = gap.data?.readiness;
-  const gapItems = [...(gap.data?.gap ?? [])].sort((a, b) => (a.status === b.status ? 0 : a.status === "MATCHED" ? 1 : b.status === "MATCHED" ? -1 : a.status === "MISSING" ? -1 : 1));
-
-  const levelPoints = (level?: string) => (level ? LEVEL_ORDER.indexOf(level as (typeof LEVEL_ORDER)[number]) + 1 : 0);
-  const stepsOf = (item: SkillGapItem) => Math.max(0, levelPoints(item.requiredLevel) - levelPoints(item.currentLevel));
-  const possibleTotal = gapItems.reduce((sum, item) => sum + levelPoints(item.requiredLevel), 0);
-  const stepsTotal = gapItems.reduce((sum, item) => sum + stepsOf(item), 0);
-  const impactOf = (item: SkillGapItem) => (possibleTotal ? Math.round(stepsOf(item) * 100 / possibleTotal) : 0);
-  const simSteps = gapItems.filter((item) => sim.has(item.name)).reduce((sum, item) => sum + stepsOf(item), 0);
-  const nowPct = possibleTotal ? Math.round((possibleTotal - stepsTotal) * 100 / possibleTotal) : 0;
-  const simPct = possibleTotal ? Math.round((possibleTotal - stepsTotal + simSteps) * 100 / possibleTotal) : 0;
-  const toggleSim = (name: string) => setSim((current) => { const next = new Set(current); if (next.has(name)) next.delete(name); else next.add(name); return next; });
-  return <>
-    <PageHeading kicker="CAREER INTELLIGENCE" title="Choose a direction. Make it yours." description="Your path compares what you know today with what a role asks for, then turns the distance into a paced plan." />
-    <div className="career-layout">
-      <section className="surface-card career-list-card">
-        <div className="card-heading"><div><div className="eyebrow">CAREER CATALOG</div><h2>Explore what’s possible</h2></div><span className="count-badge">{careers.data?.length ?? 0}</span></div>
-        <div className="segmented" role="tablist"><button role="tab" aria-selected={view === "matches"} className={view === "matches" ? "active" : ""} onClick={() => setView("matches")}>Best matches</button><button role="tab" aria-selected={view === "all"} className={view === "all" ? "active" : ""} onClick={() => setView("all")}>All careers</button></div>
-        <div className="search-field"><Search size={16} /><input placeholder="Find a career" value={q} onChange={(e) => setQ(e.target.value)} /></div>
-        {categories.length > 2 && <div className="chip-row">{categories.map((name) => <button key={name} className={`chip ${category === name ? "active" : ""}`} onClick={() => setCategory(name)}>{name}</button>)}</div>}
-        {careers.isLoading ? <LoadingLine /> : careers.isError ? <QueryError error={careers.error} /> : view === "matches" ? (
-          rankedMatches.length ? <div className="career-options">{rankedMatches.map((match) => <button key={match.careerId} className={`career-option match-option ${match.careerId === selected ? "selected" : ""}`} onClick={() => choose.mutate(match.careerId)}><span className="career-option-icon"><TrendingUp size={17} /></span><span className="match-body"><strong>{match.title}</strong><small>{match.matched} of {match.total} skills matched{match.topGaps.length ? ` · next: ${match.topGaps[0]}` : ""}</small><span className="mini-bar"><span style={{ width: `${match.readiness}%` }} /></span></span><span className="match-score">{match.readiness}%</span></button>)}</div>
-            : <EmptyState title="No matches to rank yet" text={matches.data?.reason ?? "Add skills to your profile and Dhyavora will rank the careers you are closest to."} action={<Link to="/profile" className="text-action">Add your skills <ArrowRight size={14} /></Link>} />
-        ) : filtered.length ? <div className="career-options">{filtered.map((career) => { const match = matchById.get(career._id); return <button key={career._id} className={`career-option ${career._id === selected ? "selected" : ""}`} onClick={() => choose.mutate(career._id)}><span className="career-option-icon"><BriefcaseBusiness size={17} /></span><span><strong>{career.title}</strong><small>{career.data.category ?? career.data.level ?? "Career path"}{match ? ` · ${match.readiness}% ready` : ""}</small></span>{career._id === selected ? <CheckCircle2 size={18} className="selected-check" /> : <ArrowRight size={15} />}</button>; })}</div>
-          : <EmptyState title="No catalog careers yet" text="The career catalog is empty. An administrator can add versioned role data, or set up a career source integration." />}
-        {choose.isError && <QueryError error={choose.error} />}
-      </section>
-
-      <div className="career-detail-column">
-        {selected && gap.data?.career ? <section className="surface-card career-summary">
-          <div className="target-head"><ReadinessRing value={readiness?.readiness ?? 0} /><div><div className="eyebrow">YOUR TARGET</div><h2>{gap.data.career.title}</h2><p>{gap.data.career.data.description ?? "A career direction chosen by you. Add requirements in the career catalog to calculate a skill gap."}</p></div></div>
-          {readiness && readiness.total > 0 && <div className="insight-grid"><div><strong>{readiness.matched}</strong><span>matched</span></div><div><strong>{readiness.developing}</strong><span>developing</span></div><div><strong>{readiness.missing}</strong><span>to start</span></div><div><strong>{readiness.hoursRemaining}h</strong><span>estimated to close</span></div></div>}
-          {gapItems.length ? <>
-            {sim.size > 0 && <div className="sim-banner"><Sparkles size={14} /><span>What if you close {sim.size} skill{sim.size === 1 ? "" : "s"}? Readiness <b>{nowPct}%</b> → <b>{simPct}%</b> · about {simSteps * HOURS_PER_LEVEL_STEP}h of study</span><button className="text-action" onClick={() => setSim(new Set())}>Clear</button></div>}
-            <div className="gap-table"><div className="gap-table-head"><span>Skill</span><span>Level (outlined bar = required)</span><span>Your level</span><span>Status</span><span>What if</span></div>
-              {gapItems.map((item) => <div className="gap-row" key={item.name}>
-                <strong>{item.name}{item.status !== "MATCHED" && <em className="impact-chip" title="Readiness gained when you reach the required level">+{impactOf(item)}%</em>}</strong>
-                <LevelMeter item={item} />
-                <select className="level-select" aria-label={`Your level in ${item.name}`} value={item.currentLevel ?? "NONE"} disabled={saveLevel.isPending} onChange={(event) => saveLevel.mutate({ name: item.name, level: event.target.value as Skill["level"] | "NONE" })}>{["NONE", ...LEVEL_ORDER].map((level) => <option key={level} value={level}>{LEVEL_LABEL[level]}</option>)}</select>
-                <span className={`gap-status ${item.status.toLowerCase()}`}>{item.status === "MATCHED" ? "Matched" : item.status === "DEVELOPING" ? "Developing" : "Not started"}</span>
-                {item.status !== "MATCHED" ? <label className="sim-toggle" title="Include in what-if"><input type="checkbox" checked={sim.has(item.name)} onChange={() => toggleSim(item.name)} /><span>Close</span></label> : <span />}
-              </div>)}
-            </div>
-            <small className="field-help">Levels are self-reported. Back them up with an assessment or a project.</small>
-            {saveLevel.isError && <QueryError error={saveLevel.error} />}
-          </> : <div className="soft-note">This career does not have a skill map yet. Add requirements to its catalog record to activate the gap engine.</div>}
-        </section> : <section className="surface-card career-empty"><div className="career-empty-art"><div className="career-ring ring-a" /><div className="career-ring ring-b" /><span>✦</span></div><h2>Your path begins with curiosity.</h2><p>Choose a career that feels interesting. You can change direction whenever you learn more about yourself.</p></section>}
-
-        {(matches.data?.leverage?.length ?? 0) > 0 && <section className="surface-card leverage-card"><div className="card-heading"><div><div className="eyebrow">HIGHEST LEVERAGE</div><h2>Skills that unlock the most careers</h2></div></div><div className="leverage-list">{matches.data?.leverage?.map((item) => <div className="leverage-item" key={item.name}><strong>{item.name}</strong><span>needed in {item.careerCount} careers</span><small>{item.careerTitles.join(" · ")}</small></div>)}</div></section>}
-
-        <section className="surface-card roadmap-card">
-          <div className="card-heading"><div><div className="eyebrow">YOUR ROADMAP</div><h2>{tasks.length ? `${done} of ${tasks.length} steps complete` : "A plan made from your gap"}</h2></div>
-            <button disabled={!selected || generate.isPending} onClick={() => generate.mutate()} className="button button-soft button-small">{generate.isPending ? "Building…" : tasks.length ? "Refresh plan" : "Generate plan"}<ArrowRight size={14} /></button></div>
-          <div className="pace-row"><span><Clock size={14} /> Your weekly pace</span><div className="segmented compact">{[4, 8, 12, 20].map((hours) => <button key={hours} className={(tasks.length ? livePace : pace) === hours ? "active" : ""} onClick={() => setPace(hours)}>{hours}h</button>)}</div>{tasks.length > 0 && pace !== livePace && <small className="field-help">Press “Refresh plan” to apply {pace}h a week.</small>}</div>
-          {generate.isError && <QueryError error={generate.error} />}
-          {tasks.length ? <>
-            <div className="roadmap-progress"><div className="coverage-bar"><span style={{ width: `${Math.round(done * 100 / tasks.length)}%` }} /></div><div className="roadmap-forecast"><span><Flag size={13} /> {remainingHours}h of work left</span>{finishDate ? <span>About {weeksLeft} week{weeksLeft === 1 ? "" : "s"} at {livePace}h a week · around {finishDate}</span> : <span>All steps complete. Update your profile levels to see your new readiness.</span>}</div></div>
-            {nextTask && <div className="next-up"><span className="eyebrow">UP NEXT</span><strong>{nextTask.title}</strong><small>{nextTask.estimateHours ?? 4}h · {String(nextTask.phase ?? "FOUNDATION").toLowerCase()} phase</small></div>}
-            {PHASES.map((phase) => { const group = tasks.filter((task) => (task.phase ?? "FOUNDATION") === phase.key); if (!group.length) return null; const groupDone = group.filter((task) => task.status === "COMPLETED").length;
-              return <div className="phase-block" key={phase.key}><div className="phase-head"><div><strong>{phase.label}</strong><small>{phase.hint}</small></div><span>{groupDone}/{group.length}</span></div>
-                <div className="roadmap-tasks">{group.map((task) => <div className={`roadmap-task ${task.status === "COMPLETED" ? "is-done" : ""}`} key={task.id}><div className="task-content"><strong>{task.title}</strong><p>{task.description}</p><div className="task-meta"><span className="skill-token">{task.skill}</span><span>{task.estimateHours ?? 4}h</span></div></div>
-                  <div className="status-switch" role="group" aria-label={`Status for ${task.title}`}>{STATUS_STEPS.map(([value, label]) => <button key={value} disabled={busyTask === task.id} className={task.status === value ? "active" : ""} aria-pressed={task.status === value} onClick={() => { if (activeRoadmap && task.status !== value) void updateTask(activeRoadmap._id, task.id, value); }}>{value === "COMPLETED" && task.status === value ? <Check size={11} /> : null}{label}</button>)}</div></div>)}</div></div>; })}
-          </> : <EmptyState title={selected ? "Generate your first roadmap" : "Select a career to get started"} text={selected ? "We’ll turn each missing or developing skill into three steps: learn it, practise it, then prove it." : "Your target career and your current profile skills become the inputs."} />}
-        </section>
-      </div>
-    </div>
   </>;
 }
 
