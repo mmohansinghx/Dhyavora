@@ -199,7 +199,6 @@ function CareerHero({ title, eyebrow, description, action }: { title: string; ey
 
 function OverviewPage() {
   const data = useCareerData();
-  const qc = useQueryClient();
   const profile = data.profile;
   const selected = data.gap.data?.career;
   const readiness = data.gap.data?.readiness;
