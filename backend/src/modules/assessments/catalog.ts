@@ -200,12 +200,6 @@ export function getVirtualAssessment(index: number): VirtualAssessment {
 
 export function virtualAssessmentMeta(index: number) {
   const item = getVirtualAssessment(index);
-  const { correctOption: _hidden, ...questionsWithoutAnswers } = item.data.questions.reduce(
-    (acc, question, qIndex) => ({ ...acc, [qIndex]: question.correctOption }),
-    {} as Record<number, number>,
-  );
-  void correctOption;
-  void questionsWithoutAnswers;
   return {
     ...item,
     data: {
@@ -250,19 +244,11 @@ export function listVirtualAssessments(
   limit: number,
 ) {
   const rows: VirtualAssessment[] = [];
-  let matched = 0;
-  for (let index = 0; index < VIRTUAL_ASSESSMENT_COUNT && rows.length < limit; index += 1) {
+  let total = 0;
+  for (let index = 0; index < VIRTUAL_ASSESSMENT_COUNT; index += 1) {
     if (!matchesVirtualAssessment(index, query)) continue;
-    if (matched++ < offset) continue;
-    rows.push(getVirtualAssessment(index));
-  }
-  let total = matched;
-  if (rows.length === limit) {
-    for (let index = 0; index < VIRTUAL_ASSESSMENT_COUNT; index += 1) {
-      if (matchesVirtualAssessment(index, query)) total += index === 0 ? 0 : 0;
-    }
-    total = 0;
-    for (let index = 0; index < VIRTUAL_ASSESSMENT_COUNT; index += 1) if (matchesVirtualAssessment(index, query)) total += 1;
+    if (total >= offset && rows.length < limit) rows.push(getVirtualAssessment(index));
+    total += 1;
   }
   return { rows, total };
 }
