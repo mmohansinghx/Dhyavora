@@ -140,7 +140,7 @@ function LevelMeter({ item }: { item: SkillGapItem }) {
   return <div className="level-meter" aria-label={`Current ${item.currentLevel ?? "none"}, required ${item.requiredLevel}`}>{LEVEL_ORDER.map((level, index) => <span key={level} title={level.toLowerCase()} className={`${index < current ? "have" : ""} ${index + 1 === required ? "target" : ""}`} />)}</div>;
 }
 
-function CareerPage() {
+function _CareerPage() {
   const careers = useQuery({ queryKey: ["careers"], queryFn: () => api.get<Career[]>("/careers"), retry: false });
   const matches = useQuery({ queryKey: ["career-matches"], queryFn: () => api.get<MatchesPayload>("/careers/matches"), retry: false });
   const profileQuery = useProfile(); const profile = readProfile(profileQuery.data); const selected = profile?.data?.targetCareerId as string | undefined;
