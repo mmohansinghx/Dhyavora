@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, NavLink, useLocation, useParams } from "react-router-dom";
 import {
   ArrowRight, BarChart3, BriefcaseBusiness, Check, CheckCircle2, ChevronDown,
-  Clock3, Code2, Compass, Flag, Layers3, Map,
+  Clock3, Code2, Compass, Flag, Layers3, Map as MapIcon,
   RefreshCw, Search, Sparkles, Target, TrendingUp, Zap,
 } from "lucide-react";
 import {
@@ -222,16 +222,6 @@ function OverviewPage() {
     : projectCount === 0 ? { label: "Build project evidence", text: "Add a project that demonstrates your target-career skills.", to: "/projects" }
     : { label: "Review readiness", text: "Your path has current evidence. Review the areas that can move it forward.", to: "/career/readiness" };
 
-  const _choose = useMutation({
-    mutationFn: (careerId: string) => api.post("/career/target", { careerId }),
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ["career-intelligence"] });
-      await qc.invalidateQueries({ queryKey: ["records", "profile"] });
-      await qc.invalidateQueries({ queryKey: ["skill-gap"] });
-    },
-  });
-  const _refresh = () => void qc.invalidateQueries({ queryKey: ["career-intelligence"] });
-
   if (data.profileQuery.isLoading || data.careers.isLoading || (data.selectedId && data.gap.isLoading)) return <LoadingState />;
   if (data.profileQuery.isError) return <ErrorState error={data.profileQuery.error} />;
 
@@ -258,7 +248,7 @@ function OverviewPage() {
 
     <div className="ci-metric-grid">
       <MetricCard label="Skill coverage" value={data.gap.data ? `${data.gap.data.coverage}%` : "—"} helper={selected?.title ?? "Choose a career"} icon={<Target size={17} />} />
-      <MetricCard label="Roadmap progress" value={tasks.length ? `${completedTasks}/${tasks.length}` : "—"} helper={tasks.length ? "tasks completed" : "No roadmap yet"} icon={<Map size={17} />} />
+      <MetricCard label="Roadmap progress" value={tasks.length ? `${completedTasks}/${tasks.length}` : "—"} helper={tasks.length ? "tasks completed" : "No roadmap yet"} icon={<MapIcon size={17} />} />
       <MetricCard label="Projects" value={projectCount || "—"} helper={projectCount ? "evidence items" : "No project evidence yet"} icon={<Code2 size={17} />} />
       <MetricCard label="Assessments" value={assessmentAccuracyValue !== undefined ? `${assessmentAccuracyValue}%` : "—"} helper={data.assessments.data?.length ? "recorded average" : "No scored attempts"} icon={<BarChart3 size={17} />} />
     </div>
@@ -286,7 +276,6 @@ function OverviewPage() {
       <SectionHeading eyebrow="YOUR ROADMAP" title={`${completedTasks} of ${tasks.length} steps complete`} action={<Link className="text-action" to="/career/roadmap">Open roadmap <ArrowRight size={14} /></Link>} />
       <ProgressBar value={roadmap.data.completionPercent ?? (tasks.length ? completedTasks * 100 / tasks.length : 0)} />
       <div className="ci-preview-task"><div><span className="eyebrow">NEXT</span><strong>{nextTask?.title ?? "All current steps complete"}</strong><p>{nextTask?.description ?? "Update your profile levels to see your next verified gap."}</p></div><Flag size={18} /></div>
-      {pace !== (roadmap.data.hoursPerWeek ?? 8) && <div className="ci-quiet-note">Roadmap pace is currently {roadmap.data.hoursPerWeek ?? 8}h/week. The dedicated roadmap view lets you regenerate with a supported pace.</div>}
     </AnimatedCard>}
     <div className="ci-small-actions">
       <Link to="/career/skill-gap" className="ci-action-tile"><Layers3 size={17} /><span><strong>Diagnose</strong><small>Review your canonical skill gap</small></span><ArrowRight size={14} /></Link>
@@ -441,7 +430,7 @@ function SkillGapPage() {
       })}</div>
       {saveLevel.isError && <ErrorState error={saveLevel.error} />}
     </AnimatedCard>}
-    <div className="ci-small-actions"><Link to="/career/roadmap" className="ci-action-tile"><Map size={17} /><span><strong>Plan the gap</strong><small>Open your generated roadmap</small></span><ArrowRight size={14} /></Link><Link to="/assessments" className="ci-action-tile"><BarChart3 size={17} /><span><strong>Test yourself</strong><small>Use assessment evidence</small></span><ArrowRight size={14} /></Link></div>
+    <div className="ci-small-actions"><Link to="/career/roadmap" className="ci-action-tile"><MapIcon size={17} /><span><strong>Plan the gap</strong><small>Open your generated roadmap</small></span><ArrowRight size={14} /></Link><Link to="/assessments" className="ci-action-tile"><BarChart3 size={17} /><span><strong>Test yourself</strong><small>Use assessment evidence</small></span><ArrowRight size={14} /></Link></div>
   </>;
 }
 
@@ -517,7 +506,7 @@ function ProgressPage() {
     <CareerSubnav />
     <div className="ci-metric-grid">
       <MetricCard label="Skill readiness" value={data.gap.data?.readiness ? `${data.gap.data.readiness.readiness}%` : "—"} helper={data.gap.data?.career?.title ?? "Choose a career"} icon={<Target size={17} />} />
-      <MetricCard label="Roadmap" value={tasks.length ? `${completed}/${tasks.length}` : "—"} helper={tasks.length ? "tasks completed" : "No roadmap tasks"} icon={<Map size={17} />} />
+      <MetricCard label="Roadmap" value={tasks.length ? `${completed}/${tasks.length}` : "—"} helper={tasks.length ? "tasks completed" : "No roadmap tasks"} icon={<MapIcon size={17} />} />
       <MetricCard label="Assessments" value={assessment !== undefined ? `${assessment}%` : "—"} helper={data.assessments.data?.length ? "recorded average" : "No scored attempts"} icon={<BarChart3 size={17} />} />
       <MetricCard label="Projects" value={projectCount || "—"} helper={projectCount ? "evidence items" : "No projects"} icon={<Code2 size={17} />} />
     </div>
