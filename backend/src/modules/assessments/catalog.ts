@@ -213,26 +213,20 @@ export function matchesVirtualAssessment(
   index: number,
   query: { search?: string; company?: string; career?: string; role?: string; difficulty?: string; topic?: string },
 ) {
-  const item = getVirtualAssessment(index);
-  const haystack = [
-    item.title,
-    item.data.description,
-    item.data.company,
-    item.data.career,
-    item.data.role,
-    ...(item.data.topics ?? []),
-  ].join(" ").toLowerCase();
+  const { company, career, role, difficulty, topic } = valuesForIndex(index);
+  const title = company + " · " + role + " · " + topic + " · " + difficulty + " — Simulation #" + String(index + 1).padStart(6, "0");
+  const description = "Original Dhyavora preparation simulation oriented around " + company + ", " + career + ", and " + role + ". Not a leaked or copied company test.";
+  const haystack = [title, description, company, career, role, topic].join(" ").toLowerCase();
   const match = (value: string | undefined, actual: string | undefined) => !value || value.toLowerCase() === actual?.toLowerCase();
   return Boolean(
     (!query.search || haystack.includes(query.search.toLowerCase())) &&
-    match(query.company, item.data.company) &&
-    match(query.career, item.data.career) &&
-    match(query.role, item.data.role) &&
-    match(query.difficulty, item.data.difficulty) &&
-    match(query.topic, item.data.topics?.[0]),
+    match(query.company, company) &&
+    match(query.career, career) &&
+    match(query.role, role) &&
+    match(query.difficulty, difficulty) &&
+    match(query.topic, topic),
   );
 }
-
 export function virtualIndexFromId(id: string) {
   if (!isVirtualAssessmentId(id)) return null;
   return Number.parseInt(id.slice("virtual-".length), 36);
