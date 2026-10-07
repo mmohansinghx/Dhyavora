@@ -92,7 +92,7 @@ const PHASES = [
 ];
 
 function useRecords<T extends Record<string, unknown>>(kind: string) {
-  return useQuery({ queryKey: ["career-intelligence", "records", kind], queryFn: () => api.get<Array<Row<T>>>(\`/resources/\${kind}\`), retry: false });
+  return useQuery({ queryKey: ["career-intelligence", "records", kind], queryFn: () => api.get<Array<Row<T>>>(`/resources/${kind}`), retry: false });
 }
 function useProfile() {
   return useRecords<ProfileData>("profile");
@@ -111,18 +111,18 @@ function SectionHeading({ eyebrow, title, text, action }: { eyebrow: string; tit
   return <div className="ci-section-heading"><div><div className="eyebrow">{eyebrow}</div><h2>{title}</h2>{text && <p>{text}</p>}</div>{action}</div>;
 }
 function AnimatedCard({ children, className = "", delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
-  return <motion.section className={\`surface-card ci-card \${className}\`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay }}>{children}</motion.section>;
+  return <motion.section className={`surface-card ci-card ${className}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay }}>{children}</motion.section>;
 }
 function ProgressBar({ value }: { value: number }) {
   const safe = Math.min(100, Math.max(0, value));
-  return <div className="ci-progress"><motion.span initial={{ width: 0 }} animate={{ width: \`\${safe}%\` }} transition={{ duration: 0.7, ease: "easeOut" }} /></div>;
+  return <div className="ci-progress"><motion.span initial={{ width: 0 }} animate={{ width: `${safe}%` }} transition={{ duration: 0.7, ease: "easeOut" }} /></div>;
 }
 function ReadinessRing({ value }: { value?: number }) {
   if (value === undefined) return <div className="ci-ring ci-ring-empty"><span>—</span><small>not available</small></div>;
   const radius = 48;
   const circumference = 2 * Math.PI * radius;
   const safe = Math.min(100, Math.max(0, value));
-  return <div className="ci-ring" aria-label={\`\${safe}% skill readiness\`}>
+  return <div className="ci-ring" aria-label={`${safe}% skill readiness`}>
     <svg viewBox="0 0 116 116"><circle cx="58" cy="58" r={radius} className="ci-ring-track" /><motion.circle cx="58" cy="58" r={radius} className="ci-ring-value" strokeDasharray={circumference} initial={{ strokeDashoffset: circumference }} animate={{ strokeDashoffset: circumference * (1 - safe / 100) }} transition={{ duration: 0.9 }} transform="rotate(-90 58 58)" /></svg>
     <div><strong>{safe}%</strong><span>skill readiness</span></div>
   </div>;
@@ -130,8 +130,8 @@ function ReadinessRing({ value }: { value?: number }) {
 function LevelMeter({ item }: { item: SkillGapItem }) {
   const current = item.currentLevel ? LEVELS.indexOf(item.currentLevel) + 1 : 0;
   const target = LEVELS.indexOf(item.requiredLevel) + 1;
-  return <div className="ci-level-meter" aria-label={\`Current \${item.currentLevel ?? "none"}, required \${item.requiredLevel}\`}>
-    {LEVELS.map((level, index) => <span key={level} className={\`\${index < current ? "have" : ""} \${index + 1 === target ? "target" : ""}\`} title={level.toLowerCase()} />)}
+  return <div className="ci-level-meter" aria-label={`Current ${item.currentLevel ?? "none"}, required ${item.requiredLevel}`}>
+    {LEVELS.map((level, index) => <span key={level} className={`${index < current ? "have" : ""} ${index + 1 === target ? "target" : ""}`} title={level.toLowerCase()} />)}
   </div>;
 }
 function formatDate(value?: string) {
@@ -170,7 +170,7 @@ function CareerSubnav() {
     ["/career/readiness", "Readiness"],
   ] as const;
   return <nav className="ci-subnav" aria-label="Career navigation">
-    {items.map(([to, label]) => <NavLink key={to} to={to} end={to === "/career"} className={({ isActive }) => \`ci-subnav-link \${isActive ? "active" : ""}\`}>{label}</NavLink>)}
+    {items.map(([to, label]) => <NavLink key={to} to={to} end={to === "/career"} className={({ isActive }) => `ci-subnav-link ${isActive ? "active" : ""}`}>{label}</NavLink>)}
   </nav>;
 }
 
@@ -180,7 +180,7 @@ function useCareerData() {
   const selectedId = profile?.data.targetCareerId;
   const careers = useQuery({ queryKey: ["career-intelligence", "careers"], queryFn: () => api.get<CareerRecord[]>("/careers"), retry: false });
   const matches = useQuery({ queryKey: ["career-intelligence", "matches"], queryFn: () => api.get<MatchesPayload>("/careers/matches"), retry: false });
-  const gap = useQuery({ queryKey: ["career-intelligence", "gap", selectedId], queryFn: () => api.get<GapPayload>(\`/skill-gap\${selectedId ? \`?careerId=\${encodeURIComponent(selectedId)}\` : ""}\`), enabled: Boolean(selectedId), retry: false });
+  const gap = useQuery({ queryKey: ["career-intelligence", "gap", selectedId], queryFn: () => api.get<GapPayload>(`/skill-gap${selectedId ? `?careerId=${encodeURIComponent(selectedId)}` : ""}`), enabled: Boolean(selectedId), retry: false });
   const roadmaps = useRecords<RoadmapData>("roadmap");
   const projects = useRecords<ProjectData>("project");
   const assessments = useRecords<AssessmentAttemptData>("assessment-attempt");
@@ -215,10 +215,10 @@ function OverviewPage() {
   const unfinished = tasks.filter((task) => task.status !== "COMPLETED").length;
   const recommended = !profile ? { label: "Complete your profile", text: "Add your goals and current skills so Dhyavora can calculate a useful path.", to: "/profile" }
     : !data.selectedId ? { label: "Explore careers", text: "Choose a target career to unlock your canonical skill map.", to: "/career/explore" }
-    : (readiness?.missing ?? 0) > 0 ? { label: "Open your skill gap", text: \`\${readiness?.missing} required skills are not yet recorded at the target level.\`, to: "/career/skill-gap" }
+    : (readiness?.missing ?? 0) > 0 ? { label: "Open your skill gap", text: `${readiness?.missing} required skills are not yet recorded at the target level.`, to: "/career/skill-gap" }
     : !roadmap ? { label: "Generate your roadmap", text: "Turn your current gap into learn, practise and prove phases.", to: "/career/roadmap" }
     : nextTask ? { label: "Continue your roadmap", text: nextTask.title, to: "/career/roadmap" }
-    : assessmentAccuracyValue !== undefined && assessmentAccuracyValue < 60 ? { label: "Practise an assessment", text: \`Your recorded assessment average is \${assessmentAccuracyValue}%.\`, to: "/assessments" }
+    : assessmentAccuracyValue !== undefined && assessmentAccuracyValue < 60 ? { label: "Practise an assessment", text: `Your recorded assessment average is ${assessmentAccuracyValue}%.`, to: "/assessments" }
     : projectCount === 0 ? { label: "Build project evidence", text: "Add a project that demonstrates your target-career skills.", to: "/projects" }
     : { label: "Review readiness", text: "Your path has current evidence. Review the areas that can move it forward.", to: "/career/readiness" };
 
@@ -257,17 +257,17 @@ function OverviewPage() {
     </div>
 
     <div className="ci-metric-grid">
-      <MetricCard label="Skill coverage" value={data.gap.data ? \`\${data.gap.data.coverage}%\` : "—"} helper={selected?.title ?? "Choose a career"} icon={<Target size={17} />} />
-      <MetricCard label="Roadmap progress" value={tasks.length ? \`\${completedTasks}/\${tasks.length}\` : "—"} helper={tasks.length ? "tasks completed" : "No roadmap yet"} icon={<Map size={17} />} />
+      <MetricCard label="Skill coverage" value={data.gap.data ? `${data.gap.data.coverage}%` : "—"} helper={selected?.title ?? "Choose a career"} icon={<Target size={17} />} />
+      <MetricCard label="Roadmap progress" value={tasks.length ? `${completedTasks}/${tasks.length}` : "—"} helper={tasks.length ? "tasks completed" : "No roadmap yet"} icon={<Map size={17} />} />
       <MetricCard label="Projects" value={projectCount || "—"} helper={projectCount ? "evidence items" : "No project evidence yet"} icon={<Code2 size={17} />} />
-      <MetricCard label="Assessments" value={assessmentAccuracyValue !== undefined ? \`\${assessmentAccuracyValue}%\` : "—"} helper={data.assessments.data?.length ? "recorded average" : "No scored attempts"} icon={<BarChart3 size={17} />} />
+      <MetricCard label="Assessments" value={assessmentAccuracyValue !== undefined ? `${assessmentAccuracyValue}%` : "—"} helper={data.assessments.data?.length ? "recorded average" : "No scored attempts"} icon={<BarChart3 size={17} />} />
     </div>
 
     <AnimatedCard className="ci-breakdown-card" delay={0.1}>
       <SectionHeading eyebrow="READINESS SIGNALS" title="What the system can verify" text="Only real account data is shown. A dash means this signal is not available yet." />
       <div className="ci-signal-grid">
-        <Signal label="Skills" value={readiness ? \`\${readiness.readiness}%\` : "—"} detail={readiness ? \`\${readiness.matched} matched · \${readiness.developing} developing · \${readiness.missing} missing\` : "Choose a career"} />
-        <Signal label="Assessments" value={assessmentAccuracyValue !== undefined ? \`\${assessmentAccuracyValue}%\` : "—"} detail={data.assessments.data?.length ? \`\${data.assessments.data.length} recorded attempt\${data.assessments.data.length === 1 ? "" : "s"}\` : "Not attempted"} />
+        <Signal label="Skills" value={readiness ? `${readiness.readiness}%` : "—"} detail={readiness ? `${readiness.matched} matched · ${readiness.developing} developing · ${readiness.missing} missing` : "Choose a career"} />
+        <Signal label="Assessments" value={assessmentAccuracyValue !== undefined ? `${assessmentAccuracyValue}%` : "—"} detail={data.assessments.data?.length ? `${data.assessments.data.length} recorded attempt${data.assessments.data.length === 1 ? "" : "s"}` : "Not attempted"} />
         <Signal label="Projects" value={projectCount ? String(projectCount) : "—"} detail={projectCount ? "Project evidence on your account" : "Not added"} />
         <Signal label="GitHub" value={githubConnected ? "Connected" : "Not connected"} detail={githubConnected ? "Connection detected from integration status" : "No connected GitHub integration detected"} />
         <Signal label="Resume" value={resumeAvailable ? "On file" : "—"} detail={resumeAvailable ? "Resume document found" : "No resume document found"} />
@@ -283,7 +283,7 @@ function OverviewPage() {
     {data.matches.isError && <ErrorState error={data.matches.error} />}
     {data.roadmaps.isError && <ErrorState error={data.roadmaps.error} />}
     {roadmap && unfinished > 0 && <AnimatedCard className="ci-roadmap-preview" delay={0.18}>
-      <SectionHeading eyebrow="YOUR ROADMAP" title={\`\${completedTasks} of \${tasks.length} steps complete\`} action={<Link className="text-action" to="/career/roadmap">Open roadmap <ArrowRight size={14} /></Link>} />
+      <SectionHeading eyebrow="YOUR ROADMAP" title={`${completedTasks} of ${tasks.length} steps complete`} action={<Link className="text-action" to="/career/roadmap">Open roadmap <ArrowRight size={14} /></Link>} />
       <ProgressBar value={roadmap.data.completionPercent ?? (tasks.length ? completedTasks * 100 / tasks.length : 0)} />
       <div className="ci-preview-task"><div><span className="eyebrow">NEXT</span><strong>{nextTask?.title ?? "All current steps complete"}</strong><p>{nextTask?.description ?? "Update your profile levels to see your next verified gap."}</p></div><Flag size={18} /></div>
       {pace !== (roadmap.data.hoursPerWeek ?? 8) && <div className="ci-quiet-note">Roadmap pace is currently {roadmap.data.hoursPerWeek ?? 8}h/week. The dedicated roadmap view lets you regenerate with a supported pace.</div>}
@@ -326,11 +326,11 @@ function ExplorePage() {
       <div className="ci-toolbar"><label className="ci-search"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search careers…" /></label><select value={category} onChange={(event) => setCategory(event.target.value)} aria-label="Filter by category">{categories.map((item) => <option key={item}>{item}</option>)}</select></div>
       {careers.isLoading ? <LoadingState /> : careers.isError ? <ErrorState error={careers.error} /> : !filtered.length ? <EmptyState title="No careers match that search" text="Try another search or clear the category filter." /> : <div className="ci-career-grid">{filtered.map((career) => {
         const match = matchMap.get(career._id);
-        return <motion.article key={career._id} className={\`ci-career-card \${career._id === selectedId ? "selected" : ""}\`} whileHover={{ y: -3 }}>
+        return <motion.article key={career._id} className={`ci-career-card ${career._id === selectedId ? "selected" : ""}`} whileHover={{ y: -3 }}>
           <div className="ci-card-icon"><BriefcaseBusiness size={17} /></div>
           <div className="ci-career-card-body"><div className="ci-inline-meta">{career.data.category && <span>{career.data.category}</span>}{career.data.level && <span>{career.data.level}</span>}</div><h3>{career.title}</h3><p>{career.data.description ?? "Description not provided by the career catalog."}</p>
           <div className="ci-chip-list">{(career.data.requiredSkills ?? []).slice(0, 5).map((skill) => <span key={skill.name}>{skill.name}</span>)}</div></div>
-          <div className="ci-card-footer"><Link className="text-action" to={\`/career/\${career._id}\`}>View career <ArrowRight size={14} /></Link>{match ? <span className="ci-match-score">{match.readiness}% ready</span> : null}<button className="button button-soft button-small" disabled={choose.isPending} onClick={() => choose.mutate(career._id)}>{career._id === selectedId ? "Selected" : "Choose career"}<Check size={13} /></button></div>
+          <div className="ci-card-footer"><Link className="text-action" to={`/career/${career._id}`}>View career <ArrowRight size={14} /></Link>{match ? <span className="ci-match-score">{match.readiness}% ready</span> : null}<button className="button button-soft button-small" disabled={choose.isPending} onClick={() => choose.mutate(career._id)}>{career._id === selectedId ? "Selected" : "Choose career"}<Check size={13} /></button></div>
         </motion.article>;
       })}</div>}
     </AnimatedCard>
@@ -343,7 +343,7 @@ function CareerDetailPage() {
   const career = data.careers.data?.find((item) => item._id === careerId);
   const profile = data.profile;
   const selected = profile?.data.targetCareerId === careerId;
-  const gapQuery = useQuery({ queryKey: ["career-intelligence", "gap", careerId], queryFn: () => api.get<GapPayload>(\`/skill-gap?careerId=\${encodeURIComponent(careerId ?? "")}\`), enabled: Boolean(careerId), retry: false });
+  const gapQuery = useQuery({ queryKey: ["career-intelligence", "gap", careerId], queryFn: () => api.get<GapPayload>(`/skill-gap?careerId=${encodeURIComponent(careerId ?? "")}`), enabled: Boolean(careerId), retry: false });
   const choose = useMutation({
     mutationFn: (id: string) => api.post("/career/target", { careerId: id }),
     onSuccess: () => void Promise.all([data.profileQuery.refetch(), data.gap.refetch()]),
@@ -351,7 +351,7 @@ function CareerDetailPage() {
   const gap = gapQuery.data?.gap ?? [];
   const nonMatched = gap.filter((item) => item.status !== "MATCHED");
   const firstGap = nonMatched[0];
-  const assessments = useQuery({ queryKey: ["career-intelligence", "detail-assessments", firstGap?.name], queryFn: () => api.get<Assessment[]>(\`/assessments?topic=\${encodeURIComponent(firstGap?.name ?? "")}&limit=5\`), enabled: Boolean(firstGap?.name), retry: false });
+  const assessments = useQuery({ queryKey: ["career-intelligence", "detail-assessments", firstGap?.name], queryFn: () => api.get<Assessment[]>(`/assessments?topic=${encodeURIComponent(firstGap?.name ?? "")}&limit=5`), enabled: Boolean(firstGap?.name), retry: false });
   const projects = data.projects.data ?? [];
   const projectMatch = firstGap ? projects.find((project) => toList(project.data.skills).some((skill) => skill.toLowerCase() === firstGap.name.toLowerCase()) || toList(project.data.technologies).some((skill) => skill.toLowerCase() === firstGap.name.toLowerCase())) : undefined;
   if (data.careers.isLoading) return <LoadingState />;
@@ -369,7 +369,7 @@ function CareerDetailPage() {
         {career.data.suggestedProjects?.length ? <DetailList title="Suggested projects" items={career.data.suggestedProjects} /> : null}
       </AnimatedCard>
       <AnimatedCard delay={0.06}><SectionHeading eyebrow="YOUR POSITION" title="Skill alignment" text="Status comes from the canonical Skill Gap Engine, not simple skill-name matching." />
-        {gapQuery.isLoading ? <LoadingState /> : gapQuery.isError ? <ErrorState error={gapQuery.error} /> : gap.length ? <div className="ci-skill-stack">{gap.map((item) => <div className="ci-skill-line" key={item.name}><div><strong>{item.name}</strong><small>{item.status === "MATCHED" ? "Matched" : item.status === "DEVELOPING" ? "Developing" : "Missing"} · target {LEVEL_LABEL[item.requiredLevel]}</small></div><LevelMeter item={item} /><span className={\`ci-status \${item.status.toLowerCase()}\`}>{item.status}</span></div>)}</div> : <EmptyState title="No skill map yet" text="This career does not currently expose requirements through the canonical skill-gap data." />}
+        {gapQuery.isLoading ? <LoadingState /> : gapQuery.isError ? <ErrorState error={gapQuery.error} /> : gap.length ? <div className="ci-skill-stack">{gap.map((item) => <div className="ci-skill-line" key={item.name}><div><strong>{item.name}</strong><small>{item.status === "MATCHED" ? "Matched" : item.status === "DEVELOPING" ? "Developing" : "Missing"} · target {LEVEL_LABEL[item.requiredLevel]}</small></div><LevelMeter item={item} /><span className={`ci-status ${item.status.toLowerCase()}`}>{item.status}</span></div>)}</div> : <EmptyState title="No skill map yet" text="This career does not currently expose requirements through the canonical skill-gap data." />}
         {nonMatched.length ? <div className="ci-meaning"><div className="eyebrow">WHAT THIS MEANS FOR YOU</div><p>{nonMatched.slice(0, 3).map((item) => item.name).join(", ")} {nonMatched.length === 1 ? "is" : "are"} the current open gap{nonMatched.length > 1 ? "s" : ""} for this career.</p><Link className="text-action" to="/career/skill-gap">See my skill gap <ArrowRight size={14} /></Link></div> : null}
       </AnimatedCard>
     </div>
@@ -380,7 +380,7 @@ function CareerDetailPage() {
     {nonMatched.length ? <AnimatedCard>
       <SectionHeading eyebrow="SUPPORTED NEXT STEPS" title="Recommendations grounded in available data" />
       <div className="ci-recommend-grid">
-        {assessments.data?.[0] ? <Link className="ci-recommend" to="/assessments"><ClipboardIcon /><span><strong>Practice {firstGap?.name}</strong><small>{assessments.data[0].title}{assessments.data[0].data.difficulty ? \` · \${assessments.data[0].data.difficulty}\` : ""}</small></span><ArrowRight size={14} /></Link> : null}
+        {assessments.data?.[0] ? <Link className="ci-recommend" to="/assessments"><ClipboardIcon /><span><strong>Practice {firstGap?.name}</strong><small>{assessments.data[0].title}{assessments.data[0].data.difficulty ? ` · ${assessments.data[0].data.difficulty}` : ""}</small></span><ArrowRight size={14} /></Link> : null}
         {projectMatch ? <Link className="ci-recommend" to="/projects"><Code2 /><span><strong>Review your project evidence</strong><small>{projectMatch.title} references {firstGap?.name}</small></span><ArrowRight size={14} /></Link> : null}
         {!assessments.data?.[0] && !projectMatch ? <div className="ci-quiet-note">No matching assessment or project evidence is currently exposed by the available APIs for the first open gap.</div> : null}
       </div>
@@ -407,7 +407,7 @@ function SkillGapPage() {
       const skills = (profile?.data.skills ?? []).filter((skill) => skill.name.trim().toLowerCase() !== name.trim().toLowerCase());
       const nextSkills = level === "NONE" ? skills : [...skills, { name, level }];
       const payload = { ...(profile?.data ?? {}), skills: nextSkills };
-      return profile ? api.patch(\`/resources/profile/\${profile._id}\`, { title: "Career profile", data: payload }) : api.post("/resources/profile", { title: "Career profile", data: payload });
+      return profile ? api.patch(`/resources/profile/${profile._id}`, { title: "Career profile", data: payload }) : api.post("/resources/profile", { title: "Career profile", data: payload });
     },
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ["career-intelligence"] });
@@ -419,21 +419,21 @@ function SkillGapPage() {
   if (!data.selectedId) return <><CareerHero eyebrow="DIAGNOSE" title="My skill gap" description="Choose a target career first so the canonical Skill Gap Engine has a real target." /><CareerSubnav /><EmptyState title="Choose a career to unlock your skill map" text="Your profile skills and the selected career requirements become the inputs." action={<Link className="button button-primary" to="/career/explore">Explore careers <ArrowRight size={15} /></Link>} /></>;
   if (data.gap.isError) return <ErrorState error={data.gap.error} />;
   return <>
-    <CareerHero eyebrow="DIAGNOSE" title="My skill gap" description={data.gap.data?.career?.title ? \`Your current capability against \${data.gap.data.career.title}.\` : "Your current capability against the selected career."} />
+    <CareerHero eyebrow="DIAGNOSE" title="My skill gap" description={data.gap.data?.career?.title ? `Your current capability against ${data.gap.data.career.title}.` : "Your current capability against the selected career."} />
     <CareerSubnav />
     <div className="ci-hero-grid">
-      <AnimatedCard className="ci-gap-summary"><ReadinessRing value={readiness?.readiness} /><div><div className="eyebrow">OVERALL COVERAGE</div><h2>{readiness?.readiness ?? data.gap.data?.coverage ?? 0}%</h2><p>{readiness ? \`\${readiness.matched} matched · \${readiness.developing} developing · \${readiness.missing} critical gaps · \${readiness.hoursRemaining}h estimated remaining\` : "Current coverage is available from the skill-gap service."}</p></div></AnimatedCard>
+      <AnimatedCard className="ci-gap-summary"><ReadinessRing value={readiness?.readiness} /><div><div className="eyebrow">OVERALL COVERAGE</div><h2>{readiness?.readiness ?? data.gap.data?.coverage ?? 0}%</h2><p>{readiness ? `${readiness.matched} matched · ${readiness.developing} developing · ${readiness.missing} critical gaps · ${readiness.hoursRemaining}h estimated remaining` : "Current coverage is available from the skill-gap service."}</p></div></AnimatedCard>
       <AnimatedCard><div className="ci-mini-grid"><Signal label="Strong skills" value={String(readiness?.matched ?? 0)} detail="Matched at required level" /><Signal label="Developing" value={String(readiness?.developing ?? 0)} detail="Below required level" /><Signal label="Critical gaps" value={String(readiness?.missing ?? 0)} detail="No recorded level" /></div></AnimatedCard>
     </div>
     {!gap.length ? <EmptyState title="No skill requirements are available" text="The selected career does not currently expose a canonical skill map." /> : <AnimatedCard>
       <SectionHeading eyebrow="SKILL MAP" title="Current capability → target capability" text="Level values are saved to your profile and reused by the canonical engine." />
       <div className="ci-gap-list">{gap.map((item) => {
         const open = expanded === item.name;
-        return <div className={\`ci-gap-item \${open ? "open" : ""}\`} key={item.name}>
-          <button className="ci-gap-main" onClick={() => setExpanded(open ? null : item.name)} aria-expanded={open}><div><strong>{item.name}</strong><small>{item.currentLevel ? LEVEL_LABEL[item.currentLevel] : "Not started"} → {LEVEL_LABEL[item.requiredLevel]}</small></div><LevelMeter item={item} /><span className={\`ci-status \${item.status.toLowerCase()}\`}>{item.status}</span><ChevronDown size={16} /></button>
+        return <div className={`ci-gap-item ${open ? "open" : ""}`} key={item.name}>
+          <button className="ci-gap-main" onClick={() => setExpanded(open ? null : item.name)} aria-expanded={open}><div><strong>{item.name}</strong><small>{item.currentLevel ? LEVEL_LABEL[item.currentLevel] : "Not started"} → {LEVEL_LABEL[item.requiredLevel]}</small></div><LevelMeter item={item} /><span className={`ci-status ${item.status.toLowerCase()}`}>{item.status}</span><ChevronDown size={16} /></button>
           <AnimatePresence initial={false}>{open && <motion.div className="ci-gap-details" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
             <div><span>Why it matters</span><p>It is part of the selected career's required skill map at the {LEVEL_LABEL[item.requiredLevel]} level.</p></div>
-            <div><span>What to learn</span><p>{item.status === "MISSING" ? \`Start with the fundamentals of \${item.name}.\` : \`Strengthen \${item.name} until it reaches the target level.\`}</p></div>
+            <div><span>What to learn</span><p>{item.status === "MISSING" ? `Start with the fundamentals of ${item.name}.` : `Strengthen ${item.name} until it reaches the target level.`}</p></div>
             <div><span>What to practise</span><p>Use the existing roadmap and assessment surfaces to practise this skill when matching data is available.</p></div>
             <label><span>Your recorded level</span><select value={item.currentLevel ?? "NONE"} disabled={saveLevel.isPending} onChange={(event) => saveLevel.mutate({ name: item.name, level: event.target.value as SkillLevel | "NONE" })}>{["NONE", ...LEVELS].map((level) => <option key={level} value={level}>{LEVEL_LABEL[level]}</option>)}</select></label>
           </motion.div>}</AnimatePresence>
@@ -454,12 +454,12 @@ function RoadmapPage() {
   const [pace, setPace] = useState(roadmap?.data.hoursPerWeek ?? 8);
   const [busy, setBusy] = useState<string | null>(null);
   const generate = useMutation({
-    mutationFn: () => api.post(\`/roadmaps/generate\`, { careerId: data.selectedId, hoursPerWeek: pace }),
+    mutationFn: () => api.post(`/roadmaps/generate`, { careerId: data.selectedId, hoursPerWeek: pace }),
     onSuccess: async () => { await qc.invalidateQueries({ queryKey: ["career-intelligence"] }); await qc.invalidateQueries({ queryKey: ["records", "roadmap"] }); },
   });
   async function updateTask(roadmapId: string, taskId: string, status: RoadmapTask["status"]) {
     setBusy(taskId);
-    try { await api.patch(\`/roadmaps/\${roadmapId}/tasks/\${taskId}\`, { status }); await qc.invalidateQueries({ queryKey: ["career-intelligence", "records", "roadmap"] }); } finally { setBusy(null); }
+    try { await api.patch(`/roadmaps/${roadmapId}/tasks/${taskId}`, { status }); await qc.invalidateQueries({ queryKey: ["career-intelligence", "records", "roadmap"] }); } finally { setBusy(null); }
   }
   if (!data.selectedId) return <><CareerHero eyebrow="PLAN" title="My roadmap" description="Generate a plan from your actual skill gap." /><CareerSubnav /><EmptyState title="Select a career first" text="The roadmap generator requires a real target career and its canonical skill map." action={<Link className="button button-primary" to="/career/explore">Explore careers <ArrowRight size={15} /></Link>} /></>;
   const visible = tasks.filter((task) => filter === "ALL" || (filter === "COMPLETED" ? task.status === "COMPLETED" : task.status !== "COMPLETED"));
@@ -471,7 +471,7 @@ function RoadmapPage() {
     <CareerHero eyebrow="PLAN" title="My roadmap" description="Learn → practise → prove, generated from the existing roadmap engine." action={<button className="button button-soft" disabled={generate.isPending} onClick={() => generate.mutate()}><RefreshCw size={14} /> {generate.isPending ? "Generating…" : roadmap ? "Refresh roadmap" : "Generate roadmap"}</button>} />
     <CareerSubnav />
     <AnimatedCard className="ci-roadmap-hero">
-      <div><div className="eyebrow">{data.gap.data?.career?.title ?? "TARGET CAREER"}</div><h2>{completed} of {tasks.length} tasks complete</h2><p>{tasks.length ? \`\${remaining}h of remaining work at \${livePace}h/week.\` : "Generate the roadmap to turn the current gap into a phased plan."}</p></div>
+      <div><div className="eyebrow">{data.gap.data?.career?.title ?? "TARGET CAREER"}</div><h2>{completed} of {tasks.length} tasks complete</h2><p>{tasks.length ? `${remaining}h of remaining work at ${livePace}h/week.` : "Generate the roadmap to turn the current gap into a phased plan."}</p></div>
       <div className="ci-roadmap-stat"><strong>{roadmap?.data.completionPercent ?? 0}%</strong><span>complete</span></div>
       <ProgressBar value={roadmap?.data.completionPercent ?? 0} />
     </AnimatedCard>
@@ -482,7 +482,7 @@ function RoadmapPage() {
         {PHASES.map((phase) => {
           const group = visible.filter((task) => (task.phase ?? "FOUNDATION") === phase.key);
           if (!group.length) return null;
-          return <div className="ci-phase" key={phase.key}><div className="ci-phase-label"><span>{phase.label}</span><small>{phase.hint}</small></div><div className="ci-phase-line">{group.map((task) => <motion.article key={task.id} className={\`ci-task \${task.status === "COMPLETED" ? "done" : ""}\`} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}>
+          return <div className="ci-phase" key={phase.key}><div className="ci-phase-label"><span>{phase.label}</span><small>{phase.hint}</small></div><div className="ci-phase-line">{group.map((task) => <motion.article key={task.id} className={`ci-task ${task.status === "COMPLETED" ? "done" : ""}`} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}>
             <div className="ci-task-node">{task.status === "COMPLETED" ? <Check size={13} /> : <span />}</div><div className="ci-task-body"><div className="ci-task-top"><div><strong>{task.title}</strong><p>{task.description}</p></div><span>{task.estimateHours ?? 0}h</span></div><div className="ci-task-meta"><span>{task.skill}</span><span>{task.kind ?? "TASK"}</span><div className="ci-status-switch">{(["TODO", "IN_PROGRESS", "COMPLETED"] as const).map((status) => <button key={status} disabled={busy === task.id} className={task.status === status ? "active" : ""} onClick={() => task.status !== status && void updateTask(roadmap?._id ?? "", task.id, status)}>{status === "TODO" ? "Not started" : status === "IN_PROGRESS" ? "In progress" : "Completed"}</button>)}</div></div></div>
           </motion.article>)}</div></div>;
         })}
@@ -507,21 +507,21 @@ function ProgressPage() {
     ...(data.interviews.data ?? []),
   ]);
   const activities: ActivityItem[] = [
-    ...(data.roadmaps.data ?? []).filter((row) => row.data.completionPercent !== undefined).map((row) => ({ id: \`roadmap-\${row._id}\`, title: \`\${row.title} updated\`, type: "Roadmap", date: row.updatedAt ?? row.createdAt, detail: \`\${row.data.completionPercent}% complete\` })),
-    ...(data.projects.data ?? []).map((row) => ({ id: \`project-\${row._id}\`, title: row.title, type: "Project", date: row.updatedAt ?? row.createdAt, detail: "Project evidence" })),
-    ...(data.assessments.data ?? []).filter((row) => row.data.result).map((row) => ({ id: \`assessment-\${row._id}\`, title: row.title, type: "Assessment", date: row.data.result?.submittedAt ?? row.updatedAt, detail: typeof row.data.result?.score === "number" ? \`\${row.data.result.score} pts\` : "Scored attempt" })),
-    ...(data.interviews.data ?? []).map((row) => ({ id: \`interview-\${row._id}\`, title: row.title, type: "Interview", date: row.data.completedAt ?? row.data.createdAt ?? row.updatedAt, detail: row.data.status ?? "Recorded session" })),
+    ...(data.roadmaps.data ?? []).filter((row) => row.data.completionPercent !== undefined).map((row) => ({ id: `roadmap-${row._id}`, title: `${row.title} updated`, type: "Roadmap", date: row.updatedAt ?? row.createdAt, detail: `${row.data.completionPercent}% complete` })),
+    ...(data.projects.data ?? []).map((row) => ({ id: `project-${row._id}`, title: row.title, type: "Project", date: row.updatedAt ?? row.createdAt, detail: "Project evidence" })),
+    ...(data.assessments.data ?? []).filter((row) => row.data.result).map((row) => ({ id: `assessment-${row._id}`, title: row.title, type: "Assessment", date: row.data.result?.submittedAt ?? row.updatedAt, detail: typeof row.data.result?.score === "number" ? `${row.data.result.score} pts` : "Scored attempt" })),
+    ...(data.interviews.data ?? []).map((row) => ({ id: `interview-${row._id}`, title: row.title, type: "Interview", date: row.data.completedAt ?? row.data.createdAt ?? row.updatedAt, detail: row.data.status ?? "Recorded session" })),
   ].sort((a, b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()).slice(0, 8);
   return <>
     <CareerHero eyebrow="MEASURE" title="Progress" description="A record of what you have actually done—not a fabricated growth curve." />
     <CareerSubnav />
     <div className="ci-metric-grid">
-      <MetricCard label="Skill readiness" value={data.gap.data?.readiness ? \`\${data.gap.data.readiness.readiness}%\` : "—"} helper={data.gap.data?.career?.title ?? "Choose a career"} icon={<Target size={17} />} />
-      <MetricCard label="Roadmap" value={tasks.length ? \`\${completed}/\${tasks.length}\` : "—"} helper={tasks.length ? "tasks completed" : "No roadmap tasks"} icon={<Map size={17} />} />
-      <MetricCard label="Assessments" value={assessment !== undefined ? \`\${assessment}%\` : "—"} helper={data.assessments.data?.length ? "recorded average" : "No scored attempts"} icon={<BarChart3 size={17} />} />
+      <MetricCard label="Skill readiness" value={data.gap.data?.readiness ? `${data.gap.data.readiness.readiness}%` : "—"} helper={data.gap.data?.career?.title ?? "Choose a career"} icon={<Target size={17} />} />
+      <MetricCard label="Roadmap" value={tasks.length ? `${completed}/${tasks.length}` : "—"} helper={tasks.length ? "tasks completed" : "No roadmap tasks"} icon={<Map size={17} />} />
+      <MetricCard label="Assessments" value={assessment !== undefined ? `${assessment}%` : "—"} helper={data.assessments.data?.length ? "recorded average" : "No scored attempts"} icon={<BarChart3 size={17} />} />
       <MetricCard label="Projects" value={projectCount || "—"} helper={projectCount ? "evidence items" : "No projects"} icon={<Code2 size={17} />} />
     </div>
-    <AnimatedCard><SectionHeading eyebrow="WEEKLY ACTIVITY" title={\`\${activityCount} recorded update\${activityCount === 1 ? "" : "s"} this week\`} text="Counted from timestamps exposed by the existing records." /><div className="ci-activity-strip"><ActivityDot label="Roadmap" value={data.roadmaps.data?.length ?? 0} /><ActivityDot label="Projects" value={projectCount} /><ActivityDot label="Learning" value={learningCount} /><ActivityDot label="Interviews" value={interviewCount} /></div></AnimatedCard>
+    <AnimatedCard><SectionHeading eyebrow="WEEKLY ACTIVITY" title={`${activityCount} recorded update${activityCount === 1 ? "" : "s"} this week`} text="Counted from timestamps exposed by the existing records." /><div className="ci-activity-strip"><ActivityDot label="Roadmap" value={data.roadmaps.data?.length ?? 0} /><ActivityDot label="Projects" value={projectCount} /><ActivityDot label="Learning" value={learningCount} /><ActivityDot label="Interviews" value={interviewCount} /></div></AnimatedCard>
     <AnimatedCard><SectionHeading eyebrow="SKILL EVOLUTION" title="Historical skill change" text="No historical skill snapshots are exposed by the current APIs, so Dhyavora does not invent a chart." /><EmptyState title="Your skill history will appear here" text="Complete real activities and add historical skill snapshots when that data becomes available." /></AnimatedCard>
     <AnimatedCard><SectionHeading eyebrow="ROADMAP COMPLETION" title="Current roadmap state" />{tasks.length ? <><ProgressBar value={data.roadmaps.data?.find((row) => row.data.careerId === data.selectedId)?.data.completionPercent ?? completed * 100 / tasks.length} /><div className="ci-quiet-note">{completed} completed out of {tasks.length} current roadmap tasks.</div></> : <EmptyState title="No roadmap history yet" text="Generate a roadmap to begin measuring completion." />}</AnimatedCard>
     <AnimatedCard><SectionHeading eyebrow="RECENT MILESTONES" title="Recent real activity" />{activities.length ? <div className="ci-activity-list">{activities.map((item) => <div className="ci-activity" key={item.id}><div className="ci-activity-icon"><CheckCircle2 size={15} /></div><div><strong>{item.title}</strong><span>{item.type} · {formatDate(item.date)}</span></div><small>{item.detail}</small></div>)}</div> : <EmptyState title="No activity to show yet" text="Your progress history will appear here as you complete real activities." />}</AnimatedCard>
@@ -542,8 +542,8 @@ function ReadinessPage() {
   const resumeAvailable = (data.resume.data?.length ?? 0) > 0;
   const interviewCount = data.interviews.data?.length ?? 0;
   const blockers = [
-    readiness?.missing ? \`Your largest current gap includes \${(data.gap.data?.gap ?? []).filter((item) => item.status === "MISSING").slice(0, 2).map((item) => item.name).join(" and ")}.\` : null,
-    incompleteTasks.length ? \`Your roadmap has \${incompleteTasks.length} incomplete task\${incompleteTasks.length === 1 ? "" : "s"}.\` : null,
+    readiness?.missing ? `Your largest current gap includes ${(data.gap.data?.gap ?? []).filter((item) => item.status === "MISSING").slice(0, 2).map((item) => item.name).join(" and ")}.` : null,
+    incompleteTasks.length ? `Your roadmap has ${incompleteTasks.length} incomplete task${incompleteTasks.length === 1 ? "" : "s"}.` : null,
     projects === 0 ? "Your project evidence is limited because no projects are recorded." : null,
     !githubConnected ? "GitHub is not connected, so GitHub evidence is not available." : null,
     !resumeAvailable ? "No resume document is recorded." : null,
@@ -551,8 +551,8 @@ function ReadinessPage() {
   ].filter((item): item is string => Boolean(item));
   const actions = [
     readiness?.missing ? { label: "Close the top skill gap", text: "Review your missing and developing skills.", to: "/career/skill-gap" } : null,
-    incompleteTasks.length ? { label: "Continue the roadmap", text: \`\${incompleteTasks.length} task\${incompleteTasks.length === 1 ? "" : "s"} remain.\`, to: "/career/roadmap" } : null,
-    assessment !== undefined && assessment < 60 ? { label: "Practise assessments", text: \`Recorded average: \${assessment}%.\`, to: "/assessments" } : null,
+    incompleteTasks.length ? { label: "Continue the roadmap", text: `${incompleteTasks.length} task${incompleteTasks.length === 1 ? "" : "s"} remain.`, to: "/career/roadmap" } : null,
+    assessment !== undefined && assessment < 60 ? { label: "Practise assessments", text: `Recorded average: ${assessment}%.`, to: "/assessments" } : null,
     projects === 0 ? { label: "Add project evidence", text: "Record a project that demonstrates your target skills.", to: "/projects" } : null,
     !resumeAvailable ? { label: "Build your resume", text: "Add a resume document when ready.", to: "/resume" } : null,
   ].filter((item): item is { label: string; text: string; to: string } => Boolean(item));
@@ -560,10 +560,10 @@ function ReadinessPage() {
     <CareerHero eyebrow="IMPROVE" title="Career readiness" description="A transparent view of the evidence Dhyavora can verify for your selected path." />
     <CareerSubnav />
     <div className="ci-readiness-hero">
-      <AnimatedCard className="ci-readiness-score"><ReadinessRing value={readiness?.readiness} /><div><div className="eyebrow">SKILL READINESS</div><h2>{readiness ? \`\${readiness.readiness}%\` : "—"}</h2><p>{data.gap.data?.career?.title ?? "Choose a career to calculate skill readiness."}</p></div></AnimatedCard>
+      <AnimatedCard className="ci-readiness-score"><ReadinessRing value={readiness?.readiness} /><div><div className="eyebrow">SKILL READINESS</div><h2>{readiness ? `${readiness.readiness}%` : "—"}</h2><p>{data.gap.data?.career?.title ?? "Choose a career to calculate skill readiness."}</p></div></AnimatedCard>
       <AnimatedCard className="ci-readiness-breakdown"><SectionHeading eyebrow="BREAKDOWN" title="Evidence signals" /><div className="ci-breakdown-list">
-        <Signal label="Skills" value={readiness ? \`\${readiness.readiness}%\` : "—"} detail={readiness ? \`\${readiness.matched} matched · \${readiness.developing} developing · \${readiness.missing} missing\` : "No target career"} />
-        <Signal label="Assessments" value={assessment !== undefined ? \`\${assessment}%\` : "—"} detail={data.assessments.data?.length ? "Recorded assessment performance" : "No scored attempts"} />
+        <Signal label="Skills" value={readiness ? `${readiness.readiness}%` : "—"} detail={readiness ? `${readiness.matched} matched · ${readiness.developing} developing · ${readiness.missing} missing` : "No target career"} />
+        <Signal label="Assessments" value={assessment !== undefined ? `${assessment}%` : "—"} detail={data.assessments.data?.length ? "Recorded assessment performance" : "No scored attempts"} />
         <Signal label="Projects" value={projects ? String(projects) : "—"} detail={projects ? "Recorded project evidence" : "No project evidence"} />
         <Signal label="GitHub" value={githubConnected ? "Connected" : "Not connected"} detail={githubConnected ? "Integration detected" : "No connected integration detected"} />
         <Signal label="Resume" value={resumeAvailable ? "On file" : "—"} detail={resumeAvailable ? "Resume document found" : "No resume document"} />
@@ -582,5 +582,5 @@ export function CareerIntelligence({ view }: { view: "overview" | "explore" | "s
   const location = useLocation();
   const detail = view === "detail";
   const content = detail ? <CareerDetailPage /> : view === "explore" ? <ExplorePage /> : view === "skill-gap" ? <SkillGapPage /> : view === "roadmap" ? <RoadmapPage /> : view === "progress" ? <ProgressPage /> : view === "readiness" ? <ReadinessPage /> : <OverviewPage />;
-  return <div className={\`career-intelligence \${location.pathname === "/career" ? "career-intelligence-root" : ""}\`}>{content}</div>;
+  return <div className={`career-intelligence ${location.pathname === "/career" ? "career-intelligence-root" : ""}`}>{content}</div>;
 }
