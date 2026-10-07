@@ -7,7 +7,6 @@ import { recordModel } from "../records/model.js";
 import { getVirtualAssessment, isVirtualAssessmentId, listVirtualAssessments, virtualIndexFromId, VIRTUAL_ASSESSMENT_COUNT } from "./catalog.js";
 
 export const assessmentRouter = Router();
-const oid = z.string().regex(/^[\da-f]{24}$/i);
 const question = z.object({ prompt: z.string().trim().min(2).max(1500), options: z.array(z.string().trim().min(1).max(500)).min(2).max(8), correctOption: z.number().int().nonnegative(), points: z.number().min(0).max(20).default(1) }).refine((item) => item.correctOption < item.options.length, { message: "correctOption must refer to an available option" });
 const assessmentInput = z.object({ title: z.string().trim().min(2).max(180), data: z.object({ description: z.string().max(2000).optional(), durationMinutes: z.number().int().min(1).max(240), negativeMark: z.number().min(0).max(20).default(0), questions: z.array(question).min(1).max(100), careerId: z.string().optional(), career: z.string().trim().max(120).optional(), company: z.string().trim().max(120).optional(), role: z.string().trim().max(120).optional(), difficulty: z.enum(["Easy", "Medium", "Hard", "Medium → Hard"]).optional(), topics: z.array(z.string().trim().min(1).max(80)).max(20).default([]), assessmentType: z.enum(["MCQ", "Coding", "Debugging", "SQL", "Output prediction", "System Design", "Behavioral/Scenario"]).optional(), active: z.boolean().default(true) }).strict() }).strict();
 
