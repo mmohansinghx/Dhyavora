@@ -4,6 +4,7 @@ import { requireAuth, requireAdmin } from "../../middleware/auth.js";
 import { asyncHandler } from "../../shared/asyncHandler.js";
 import { databaseStatus } from "../../config/database.js";
 import { recordModel } from "../records/model.js";
+import { getVirtualAssessment, isVirtualAssessmentId, listVirtualAssessments, virtualIndexFromId, VIRTUAL_ASSESSMENT_COUNT } from "./catalog.js";
 
 export const assessmentRouter = Router();
 const oid = z.string().regex(/^[\da-f]{24}$/i);
@@ -15,6 +16,15 @@ function unavailable(res: import("express").Response) {
   res.status(503).json({ success: false, error: { code: "DATABASE_UNAVAILABLE", message: "MongoDB is not connected." } });
   return true;
 }
+const assessmentIdSchema = z.string().refine((value) => oid.test(value) || isVirtualAssessmentId(value), { message: "Invalid assessment id" });
+
+async function findAssessmentDefinition(id: string) {
+  const virtualIndex = virtualIndexFromId(id);
+  if (virtualIndex !== null && virtualIndex < VIRTUAL_ASSESSMENT_COUNT) return getVirtualAssessment(virtualIndex);
+  if (isVirtualAssessmentId(id)) return null;
+  return await recordModel("assessment").findOne({ _id: id, deletedAt: null, "data.active": true }).lean();
+}
+
 function withoutAnswers<T extends { data?: Record<string, unknown> }>(row: T) {
   const data = row.data ?? {};
   const questions = Array.isArray(data.questions) ? data.questions.map((q) => {
@@ -45,6 +55,7 @@ assessmentRouter.get("/assessments", requireAuth, asyncHandler(async (req, res) 
     page: z.coerce.number().int().min(1).default(1),
     limit: z.coerce.number().int().min(1).max(50).default(20),
   }).parse(req.query);
+
   const filter: Record<string, unknown> = { deletedAt: null, "data.active": true };
   const escape = (value: string) => value.replace(/[.*+?^$()|[\]\\]/g, "\\$&");
   if (query.company) filter["data.company"] = new RegExp("^" + escape(query.company) + "$", "i");
@@ -56,12 +67,33 @@ assessmentRouter.get("/assessments", requireAuth, asyncHandler(async (req, res) 
     const re = new RegExp(escape(query.search), "i");
     filter["$or"] = [{ title: re }, { "data.description": re }, { "data.company": re }, { "data.career": re }, { "data.role": re }, { "data.topics": re }];
   }
+
   const skip = (query.page - 1) * query.limit;
-  const [rows, total] = await Promise.all([
-    recordModel("assessment").find(filter).sort({ updatedAt: -1 }).skip(skip).limit(query.limit).lean(),
-    recordModel("assessment").countDocuments(filter),
-  ]);
-  res.json({ success: true, data: rows.map((row) => withoutAnswers(row as never)), meta: { page: query.page, limit: query.limit, total, pages: Math.ceil(total / query.limit) } });
+  const actualTotal = await recordModel("assessment").countDocuments(filter);
+  const actualTake = skip < actualTotal ? Math.min(query.limit, actualTotal - skip) : 0;
+  const actualRows = actualTake
+    ? await recordModel("assessment").find(filter).sort({ updatedAt: -1 }).skip(skip).limit(actualTake).lean()
+    : [];
+
+  const virtualOffset = Math.max(0, skip - actualTotal);
+  const virtualLimit = Math.max(0, query.limit - actualRows.length);
+  const virtualPage = virtualLimit > 0
+    ? listVirtualAssessments(query, virtualOffset, virtualLimit)
+    : { rows: [], total: 0 };
+
+  const total = actualTotal + virtualPage.total;
+  const rows = [...actualRows, ...virtualPage.rows];
+  res.json({
+    success: true,
+    data: rows.map((row) => withoutAnswers(row as never)),
+    meta: {
+      page: query.page,
+      limit: query.limit,
+      total,
+      pages: Math.ceil(total / query.limit),
+      virtualTotal: VIRTUAL_ASSESSMENT_COUNT,
+    },
+  });
 }));
 
 assessmentRouter.post("/admin/assessments", requireAuth, requireAdmin, asyncHandler(async (req, res) => {
@@ -73,25 +105,30 @@ assessmentRouter.post("/admin/assessments", requireAuth, requireAdmin, asyncHand
 
 assessmentRouter.post("/assessments/:id/attempts", requireAuth, asyncHandler(async (req, res) => {
   if (unavailable(res)) return;
-  const { id } = z.object({ id: oid }).parse(req.params);
-  const assessment = await recordModel("assessment").findOne({ _id: id, deletedAt: null, "data.active": true }).lean() as { _id: { toString(): string }; title: string; data: { durationMinutes: number; questions: Array<{ prompt: string; options: string[] }> } } | null;
+  const { id } = z.object({ id: assessmentIdSchema }).parse(req.params);
+  const assessment = await findAssessmentDefinition(id) as {
+    _id: { toString(): string } | string;
+    title: string;
+    data: { durationMinutes: number; questions: Array<{ prompt: string; options: string[] }> };
+  } | null;
   if (!assessment) return res.status(404).json({ success: false, error: { code: "ASSESSMENT_NOT_FOUND", message: "The assessment is unavailable." } });
   const startedAt = new Date();
-  const attempt = await recordModel("assessment-attempt").create({ userId: req.auth!.uid, title: assessment.title, data: { assessmentId: assessment._id.toString(), startedAt: startedAt.toISOString(), durationMinutes: assessment.data.durationMinutes, answers: {}, status: "IN_PROGRESS" } });
+  const assessmentId = typeof assessment._id === "string" ? assessment._id : assessment._id.toString();
+  const attempt = await recordModel("assessment-attempt").create({ userId: req.auth!.uid, title: assessment.title, data: { assessmentId, startedAt: startedAt.toISOString(), durationMinutes: assessment.data.durationMinutes, answers: {}, status: "IN_PROGRESS" } });
   const questions = assessment.data.questions.map(({ prompt, options }, index) => ({ id: String(index), prompt, options }));
   res.status(201).json({ success: true, data: { attemptId: attempt.id, startedAt: startedAt.toISOString(), durationMinutes: assessment.data.durationMinutes, questions } });
 }));
 
 assessmentRouter.put("/assessment-attempts/:id/answers/:questionIndex", requireAuth, asyncHandler(async (req, res) => {
   if (unavailable(res)) return;
-  const params = z.object({ id: oid, questionIndex: z.coerce.number().int().nonnegative() }).parse(req.params);
+  const params = z.object({ id: assessmentIdSchema, questionIndex: z.coerce.number().int().nonnegative() }).parse(req.params);
   const input = z.object({ selectedOption: z.number().int().nonnegative().optional(), markForReview: z.boolean().default(false) }).strict().parse(req.body);
   const attempt = await recordModel("assessment-attempt").findOne({ _id: params.id, userId: req.auth!.uid, deletedAt: null });
   if (!attempt) return res.status(404).json({ success: false, error: { code: "ATTEMPT_NOT_FOUND", message: "The assessment attempt was not found." } });
   const data = attempt.get("data") as { assessmentId: string; startedAt: string; durationMinutes: number; answers: Record<string, { selectedOption?: number; markForReview: boolean }>; status: string };
   if (data.status !== "IN_PROGRESS") return res.status(409).json({ success: false, error: { code: "ATTEMPT_CLOSED", message: "This attempt has already been submitted." } });
   if (Date.now() > Date.parse(data.startedAt) + data.durationMinutes * 60000) return res.status(409).json({ success: false, error: { code: "TIME_EXPIRED", message: "The server controlled assessment timer has expired." } });
-  const assessment = await recordModel("assessment").findOne({ _id: data.assessmentId, deletedAt: null }).lean() as { data: { questions: Array<{ options: string[] }> } } | null;
+  const assessment = await findAssessmentDefinition(data.assessmentId) as { data: { questions: Array<{ options: string[] }> } } | null;
   const target = assessment?.data.questions[params.questionIndex];
   if (!target || (input.selectedOption !== undefined && input.selectedOption >= target.options.length)) return res.status(400).json({ success: false, error: { code: "INVALID_ANSWER", message: "The selected question or option is invalid." } });
   data.answers = data.answers ?? {};
@@ -104,12 +141,12 @@ assessmentRouter.put("/assessment-attempts/:id/answers/:questionIndex", requireA
 
 assessmentRouter.post("/assessment-attempts/:id/submit", requireAuth, asyncHandler(async (req, res) => {
   if (unavailable(res)) return;
-  const { id } = z.object({ id: oid }).parse(req.params);
+  const { id } = z.object({ id: assessmentIdSchema }).parse(req.params);
   const attempt = await recordModel("assessment-attempt").findOne({ _id: id, userId: req.auth!.uid, deletedAt: null });
   if (!attempt) return res.status(404).json({ success: false, error: { code: "ATTEMPT_NOT_FOUND", message: "The assessment attempt was not found." } });
   const data = attempt.get("data") as { assessmentId: string; startedAt: string; durationMinutes: number; answers: Record<string, { selectedOption?: number; markForReview: boolean }>; status: string };
   if (data.status !== "IN_PROGRESS") return res.status(409).json({ success: false, error: { code: "ATTEMPT_CLOSED", message: "This attempt has already been submitted." } });
-  const assessment = await recordModel("assessment").findOne({ _id: data.assessmentId, deletedAt: null }).lean() as { data: { negativeMark: number; questions: Array<{ correctOption: number; points: number }> } } | null;
+  const assessment = await findAssessmentDefinition(data.assessmentId) as { data: { negativeMark: number; questions: Array<{ correctOption: number; points: number }> } } | null;
   if (!assessment) return res.status(404).json({ success: false, error: { code: "ASSESSMENT_NOT_FOUND", message: "The assessment definition is unavailable." } });
   const savedAnswers = data.answers ?? {};
   const elapsedMs = Date.now() - Date.parse(data.startedAt);
