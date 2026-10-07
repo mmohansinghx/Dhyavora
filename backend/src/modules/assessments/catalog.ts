@@ -261,7 +261,7 @@ function specializedRoundTracks(profile: CompanyProfile): AssessmentTrack[] {
   return [
     { name: "Coding Round", round: "Coding round", focus: ["DSA", "JavaScript", "Python"], emphasis: "algorithmic problem solving, edge cases and maintainable implementation in a " + profile.domain + " setting", durationMinutes: 75 },
     { name: "SQL & Data Round", round: "SQL round", focus: ["SQL"], emphasis: "query reasoning, joins, aggregation, data correctness and performance for a " + profile.domain + " workload", durationMinutes: 50 },
-    { name: "Debugging & Reliability Round", round: "Debugging round", focus: ["Debugging", "Testing", "APIs"], emphasis: "root-cause analysis, regression prevention, async failures and reliable service behavior in a " + profile.domain + " environment", durationMinutes: 50 },
+    { name: "Debugging & Reliability Round", round: "Debugging round", focus: ["Debugging", "Testing"], emphasis: "root-cause analysis, regression prevention, async failures and reliable service behavior in a " + profile.domain + " environment", durationMinutes: 50 },
   ];
 }
 
