@@ -536,7 +536,7 @@ function ReadinessPage() {
   const readiness = data.gap.data?.readiness;
   const tasks = data.roadmaps.data?.flatMap((row) => row.data.tasks ?? []) ?? [];
   const incompleteTasks = tasks.filter((task) => task.status !== "COMPLETED");
-  const assessment = scorePercent(data.assessments.data ?? []);
+  const assessment = assessmentAccuracy(data.assessments.data ?? []);
   const projects = data.projects.data?.length ?? 0;
   const githubConnected = Object.values(data.integrations.data ?? {}).some((item) => item.state === "CONNECTED" && (item.provider ?? "").toLowerCase().includes("github"));
   const resumeAvailable = (data.resume.data?.length ?? 0) > 0;
