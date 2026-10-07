@@ -218,7 +218,7 @@ function OverviewPage() {
     : (readiness?.missing ?? 0) > 0 ? { label: "Open your skill gap", text: \`\${readiness?.missing} required skills are not yet recorded at the target level.\`, to: "/career/skill-gap" }
     : !roadmap ? { label: "Generate your roadmap", text: "Turn your current gap into learn, practise and prove phases.", to: "/career/roadmap" }
     : nextTask ? { label: "Continue your roadmap", text: nextTask.title, to: "/career/roadmap" }
-    : assessmentScore !== undefined && assessmentScore < 60 ? { label: "Practise an assessment", text: \`Your recorded assessment average is \${assessmentScore}%.\`, to: "/assessments" }
+    : assessmentAccuracyValue !== undefined && assessmentAccuracyValue < 60 ? { label: "Practise an assessment", text: \`Your recorded assessment average is \${assessmentAccuracyValue}%.\`, to: "/assessments" }
     : projectCount === 0 ? { label: "Build project evidence", text: "Add a project that demonstrates your target-career skills.", to: "/projects" }
     : { label: "Review readiness", text: "Your path has current evidence. Review the areas that can move it forward.", to: "/career/readiness" };
 
@@ -260,14 +260,14 @@ function OverviewPage() {
       <MetricCard label="Skill coverage" value={data.gap.data ? \`\${data.gap.data.coverage}%\` : "—"} helper={selected?.title ?? "Choose a career"} icon={<Target size={17} />} />
       <MetricCard label="Roadmap progress" value={tasks.length ? \`\${completedTasks}/\${tasks.length}\` : "—"} helper={tasks.length ? "tasks completed" : "No roadmap yet"} icon={<Map size={17} />} />
       <MetricCard label="Projects" value={projectCount || "—"} helper={projectCount ? "evidence items" : "No project evidence yet"} icon={<Code2 size={17} />} />
-      <MetricCard label="Assessments" value={assessmentScore !== undefined ? \`\${assessmentScore}%\` : "—"} helper={data.assessments.data?.length ? "recorded average" : "No scored attempts"} icon={<BarChart3 size={17} />} />
+      <MetricCard label="Assessments" value={assessmentAccuracyValue !== undefined ? \`\${assessmentAccuracyValue}%\` : "—"} helper={data.assessments.data?.length ? "recorded average" : "No scored attempts"} icon={<BarChart3 size={17} />} />
     </div>
 
     <AnimatedCard className="ci-breakdown-card" delay={0.1}>
       <SectionHeading eyebrow="READINESS SIGNALS" title="What the system can verify" text="Only real account data is shown. A dash means this signal is not available yet." />
       <div className="ci-signal-grid">
         <Signal label="Skills" value={readiness ? \`\${readiness.readiness}%\` : "—"} detail={readiness ? \`\${readiness.matched} matched · \${readiness.developing} developing · \${readiness.missing} missing\` : "Choose a career"} />
-        <Signal label="Assessments" value={assessmentScore !== undefined ? \`\${assessmentScore}%\` : "—"} detail={data.assessments.data?.length ? \`\${data.assessments.data.length} recorded attempt\${data.assessments.data.length === 1 ? "" : "s"}\` : "Not attempted"} />
+        <Signal label="Assessments" value={assessmentAccuracyValue !== undefined ? \`\${assessmentAccuracyValue}%\` : "—"} detail={data.assessments.data?.length ? \`\${data.assessments.data.length} recorded attempt\${data.assessments.data.length === 1 ? "" : "s"}\` : "Not attempted"} />
         <Signal label="Projects" value={projectCount ? String(projectCount) : "—"} detail={projectCount ? "Project evidence on your account" : "Not added"} />
         <Signal label="GitHub" value={githubConnected ? "Connected" : "Not connected"} detail={githubConnected ? "Connection detected from integration status" : "No connected GitHub integration detected"} />
         <Signal label="Resume" value={resumeAvailable ? "On file" : "—"} detail={resumeAvailable ? "Resume document found" : "No resume document found"} />
