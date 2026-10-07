@@ -222,7 +222,7 @@ function OverviewPage() {
     : projectCount === 0 ? { label: "Build project evidence", text: "Add a project that demonstrates your target-career skills.", to: "/projects" }
     : { label: "Review readiness", text: "Your path has current evidence. Review the areas that can move it forward.", to: "/career/readiness" };
 
-  const choose = useMutation({
+  const _choose = useMutation({
     mutationFn: (careerId: string) => api.post("/career/target", { careerId }),
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ["career-intelligence"] });
