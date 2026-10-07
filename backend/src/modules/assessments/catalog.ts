@@ -17,6 +17,7 @@ export type VirtualAssessment = {
     assessmentTrack: string;
     assessmentRound: string;
     companyDomain: string;
+    questionBankSize: number;
     blueprint: { focus: Array<{ topic: string; weight: number }>; emphasis: string };
     active: true;
     virtual: true;
