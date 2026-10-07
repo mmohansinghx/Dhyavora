@@ -1,4 +1,5 @@
 export const VIRTUAL_ASSESSMENT_COUNT = 100_000;
+export const COMPANY_QUESTION_BANK_SIZE = 600;
 
 export type VirtualAssessment = {
   _id: string;
@@ -13,9 +14,14 @@ export type VirtualAssessment = {
     difficulty: "Easy" | "Medium" | "Hard" | "Medium → Hard";
     topics: string[];
     assessmentType: "MCQ";
+    assessmentTrack: string;
+    assessmentRound: string;
+    companyDomain: string;
+    questionBankSize: number;
+    blueprint: { focus: Array<{ topic: string; weight: number }>; emphasis: string };
     active: true;
     virtual: true;
-    questions: Array<{ id: string; prompt: string; options: string[]; correctOption: number; points: number }>;
+    questions: Array<{ id: string; prompt: string; options: string[]; correctOption: number; points: number; questionType: "Coding" | "SQL" | "Debugging" | "System Design"; section: string }>;
   };
 };
 
@@ -38,12 +44,321 @@ const ROLES = [
 
 const DIFFICULTIES = ["Easy", "Medium", "Hard", "Medium → Hard"] as const;
 
-const TOPICS = [
-  "DSA", "SQL", "JavaScript", "React", "Python", "System Design",
-  "APIs", "Cloud", "Testing", "Debugging",
-] as const;
+type AssessmentTopic = "DSA" | "SQL" | "JavaScript" | "React" | "Python" | "System Design" | "APIs" | "Cloud" | "Testing" | "Debugging";
+
+type AssessmentTrack = {
+  name: string;
+  round: string;
+  focus: readonly AssessmentTopic[];
+  emphasis: string;
+  durationMinutes: number;
+};
+
+type CompanyProfile = {
+  domain: string;
+  tracks: readonly AssessmentTrack[];
+};
+
+const COMPANY_PROFILES: Record<string, CompanyProfile> = {
+  Amazon: {
+    domain: "commerce, logistics and cloud",
+    tracks: [
+      { name: "Algorithms & Problem Solving & Problem Solving", round: "Online assessment", focus: ["DSA", "Debugging"], emphasis: "data structures, edge cases and implementation discipline", durationMinutes: 70 },
+      { name: "Backend Foundations", round: "Technical screen", focus: ["APIs", "SQL", "Testing"], emphasis: "service contracts, data access and production correctness", durationMinutes: 55 },
+      { name: "Systems at Scale", round: "System design", focus: ["System Design", "Cloud", "APIs"], emphasis: "scalable services, reliability and operational trade-offs", durationMinutes: 65 },
+      { name: "Leadership Scenario", round: "Scenario screen", focus: ["Behavioral/Scenario", "Debugging"], emphasis: "ownership, trade-offs and incident reasoning", durationMinutes: 35 },
+    ],
+  },
+  Google: {
+    domain: "search, distributed infrastructure and developer platforms",
+    tracks: [
+      { name: "Algorithms & Problem Solving & Problem Solving", round: "Coding screen", focus: ["DSA", "Python"], emphasis: "algorithmic reasoning, complexity and clean implementation", durationMinutes: 70 },
+      { name: "Code Quality & Debugging", round: "Technical screen", focus: ["Debugging", "Testing"], emphasis: "reasoning from failures and making precise fixes", durationMinutes: 55 },
+      { name: "Systems Design", round: "System design", focus: ["System Design", "APIs", "Cloud"], emphasis: "distributed design, interfaces and reliability", durationMinutes: 65 },
+      { name: "Frontend Systems", round: "Frontend screen", focus: ["JavaScript", "React", "APIs"], emphasis: "state, rendering, asynchronous flows and data fetching", durationMinutes: 55 },
+    ],
+  },
+  Microsoft: {
+    domain: "cloud, productivity software and developer tools",
+    tracks: [
+      { name: "Programming & CS Core", round: "Technical screen", focus: ["DSA", "Python"], emphasis: "problem solving and core programming concepts", durationMinutes: 65 },
+      { name: "Debugging & Testing", round: "Technical screen", focus: ["Debugging", "Testing"], emphasis: "diagnosis, test design and regression prevention", durationMinutes: 50 },
+      { name: "Cloud & Services", round: "System design", focus: ["Cloud", "APIs", "System Design"], emphasis: "service architecture, availability and platform thinking", durationMinutes: 60 },
+      { name: "Web Engineering", round: "Frontend screen", focus: ["JavaScript", "React", "APIs"], emphasis: "web performance, state and API integration", durationMinutes: 55 },
+    ],
+  },
+  Meta: {
+    domain: "social products, messaging and large-scale consumer applications",
+    tracks: [
+      { name: "Algorithms & Problem Solving Core", round: "Coding screen", focus: ["DSA", "Debugging"], emphasis: "fast problem solving and robust edge-case handling", durationMinutes: 65 },
+      { name: "Product Engineering", round: "Technical screen", focus: ["JavaScript", "React", "APIs"], emphasis: "product-facing engineering and client-server flows", durationMinutes: 55 },
+      { name: "Distributed Systems", round: "System design", focus: ["System Design", "APIs", "Cloud"], emphasis: "high-throughput services, consistency and resilience", durationMinutes: 65 },
+      { name: "Performance & Reliability", round: "Technical screen", focus: ["Debugging", "Testing", "APIs"], emphasis: "latency, regressions and production reliability", durationMinutes: 50 },
+    ],
+  },
+  Apple: {
+    domain: "consumer devices, software platforms and services",
+    tracks: [
+      { name: "Programming Fundamentals", round: "Technical screen", focus: ["DSA", "Python"], emphasis: "clean logic, complexity and implementation correctness", durationMinutes: 60 },
+      { name: "Platform Debugging", round: "Technical screen", focus: ["Debugging", "Testing"], emphasis: "diagnosing software behavior across layers", durationMinutes: 50 },
+      { name: "Service Architecture", round: "System design", focus: ["System Design", "APIs"], emphasis: "clear boundaries, reliability and API contracts", durationMinutes: 60 },
+      { name: "Client Engineering", round: "Frontend screen", focus: ["JavaScript", "React"], emphasis: "state management, rendering and user-facing behavior", durationMinutes: 50 },
+    ],
+  },
+  Netflix: {
+    domain: "streaming, content delivery and recommendation systems",
+    tracks: [
+      { name: "Backend Engineering", round: "Technical screen", focus: ["APIs", "Python", "SQL"], emphasis: "service logic, data access and correctness", durationMinutes: 60 },
+      { name: "Distributed Systems", round: "System design", focus: ["System Design", "Cloud", "APIs"], emphasis: "availability, caching and high-volume traffic", durationMinutes: 70 },
+      { name: "Data & Experimentation", round: "Technical screen", focus: ["SQL", "Python", "Testing"], emphasis: "data reasoning, experiments and reliable pipelines", durationMinutes: 55 },
+      { name: "Reliability Scenarios", round: "Scenario screen", focus: ["Debugging", "System Design"], emphasis: "incident diagnosis and resilient design choices", durationMinutes: 45 },
+    ],
+  },
+  Adobe: {
+    domain: "creative software, documents and cloud experiences",
+    tracks: [
+      { name: "Web Engineering", round: "Frontend screen", focus: ["JavaScript", "React", "APIs"], emphasis: "frontend architecture, async flows and UX reliability", durationMinutes: 55 },
+      { name: "Algorithms & Problem Solving & Problem Solving", round: "Coding screen", focus: ["DSA", "Python"], emphasis: "problem solving and implementation quality", durationMinutes: 60 },
+      { name: "Data & SQL", round: "Technical screen", focus: ["SQL", "Testing"], emphasis: "analytics queries and correctness under edge cases", durationMinutes: 50 },
+      { name: "Cloud Services", round: "System design", focus: ["Cloud", "APIs", "System Design"], emphasis: "service design and scalable cloud workloads", durationMinutes: 60 },
+    ],
+  },
+  Salesforce: {
+    domain: "enterprise cloud, CRM workflows and platform APIs",
+    tracks: [
+      { name: "Enterprise Backend", round: "Technical screen", focus: ["APIs", "SQL", "Testing"], emphasis: "business workflows, data integrity and service contracts", durationMinutes: 60 },
+      { name: "Algorithms & Problem Solving Core", round: "Coding screen", focus: ["DSA", "Debugging"], emphasis: "algorithmic reasoning and reliable implementation", durationMinutes: 60 },
+      { name: "Platform Architecture", round: "System design", focus: ["System Design", "Cloud", "APIs"], emphasis: "multi-tenant thinking, scale and reliability", durationMinutes: 65 },
+      { name: "Frontend Platform", round: "Frontend screen", focus: ["JavaScript", "React"], emphasis: "stateful enterprise interfaces and data fetching", durationMinutes: 50 },
+    ],
+  },
+  Oracle: {
+    domain: "databases, enterprise software and cloud infrastructure",
+    tracks: [
+      { name: "SQL & Data", round: "Technical screen", focus: ["SQL", "Python"], emphasis: "data access, query reasoning and analytics", durationMinutes: 55 },
+      { name: "JavaScript & Web", round: "Frontend screen", focus: ["JavaScript", "APIs"], emphasis: "web fundamentals, async behavior and service integration", durationMinutes: 50 },
+      { name: "Backend Services", round: "Technical screen", focus: ["APIs", "Testing", "Debugging"], emphasis: "service correctness and production troubleshooting", durationMinutes: 55 },
+      { name: "Cloud Architecture", round: "System design", focus: ["Cloud", "System Design"], emphasis: "infrastructure, scaling and failure handling", durationMinutes: 60 },
+    ],
+  },
+  IBM: {
+    domain: "enterprise technology, cloud and AI platforms",
+    tracks: [
+      { name: "Programming Foundations", round: "Technical screen", focus: ["DSA", "Python"], emphasis: "programming fundamentals and algorithmic thinking", durationMinutes: 60 },
+      { name: "Cloud & APIs", round: "Technical screen", focus: ["Cloud", "APIs"], emphasis: "service integration and deployment-aware design", durationMinutes: 55 },
+      { name: "Data Engineering", round: "Technical screen", focus: ["SQL", "Python", "Testing"], emphasis: "data pipelines and correctness", durationMinutes: 60 },
+      { name: "Systems & Reliability", round: "System design", focus: ["System Design", "Debugging"], emphasis: "resilience, observability and fault isolation", durationMinutes: 60 },
+    ],
+  },
+  NVIDIA: {
+    domain: "accelerated computing, AI infrastructure and developer platforms",
+    tracks: [
+      { name: "Algorithms & Problem Solving & Performance", round: "Coding screen", focus: ["DSA", "Python"], emphasis: "algorithmic efficiency and performance-aware reasoning", durationMinutes: 65 },
+      { name: "Systems Debugging", round: "Technical screen", focus: ["Debugging", "Testing"], emphasis: "low-level reasoning and failure isolation", durationMinutes: 55 },
+      { name: "AI Platform Services", round: "Technical screen", focus: ["Python", "APIs", "Cloud"], emphasis: "model-serving workflows and service design", durationMinutes: 60 },
+      { name: "Scalable Infrastructure", round: "System design", focus: ["System Design", "Cloud"], emphasis: "throughput, compute efficiency and resilience", durationMinutes: 65 },
+    ],
+  },
+  Uber: {
+    domain: "mobility, marketplaces and real-time logistics",
+    tracks: [
+      { name: "Algorithms & Problem Solving & DSA", round: "Coding screen", focus: ["DSA", "Debugging"], emphasis: "real-time problem solving and edge cases", durationMinutes: 65 },
+      { name: "Backend & APIs", round: "Technical screen", focus: ["APIs", "SQL", "Testing"], emphasis: "transactional services and API correctness", durationMinutes: 60 },
+      { name: "Real-Time Systems", round: "System design", focus: ["System Design", "Cloud", "APIs"], emphasis: "low-latency systems, load and resilience", durationMinutes: 70 },
+      { name: "Data & Experimentation", round: "Technical screen", focus: ["SQL", "Python"], emphasis: "marketplace data and analytical reasoning", durationMinutes: 50 },
+    ],
+  },
+  Atlassian: {
+    domain: "collaboration software, developer tools and cloud products",
+    tracks: [
+      { name: "Programming Fundamentals", round: "Coding screen", focus: ["DSA", "Python"], emphasis: "clean solutions and engineering trade-offs", durationMinutes: 60 },
+      { name: "Developer Platform", round: "Technical screen", focus: ["APIs", "JavaScript", "Testing"], emphasis: "integration design and developer experience", durationMinutes: 55 },
+      { name: "Cloud Systems", round: "System design", focus: ["System Design", "Cloud"], emphasis: "multi-tenant services and reliability", durationMinutes: 60 },
+      { name: "Frontend Applications", round: "Frontend screen", focus: ["React", "JavaScript", "APIs"], emphasis: "state, rendering and integration", durationMinutes: 55 },
+    ],
+  },
+  Walmart: {
+    domain: "retail, supply chain and high-volume commerce systems",
+    tracks: [
+      { name: "Commerce Coding", round: "Coding screen", focus: ["DSA", "SQL"], emphasis: "transactional problem solving and data-heavy workflows", durationMinutes: 60 },
+      { name: "Backend Retail", round: "Technical screen", focus: ["APIs", "SQL", "Testing"], emphasis: "inventory, ordering and service correctness", durationMinutes: 60 },
+      { name: "Scale & Reliability", round: "System design", focus: ["System Design", "Cloud"], emphasis: "high traffic, resilience and operational design", durationMinutes: 65 },
+      { name: "Web Commerce", round: "Frontend screen", focus: ["JavaScript", "React"], emphasis: "catalog, state and customer-facing flows", durationMinutes: 50 },
+    ],
+  },
+  Flipkart: {
+    domain: "e-commerce, payments and logistics",
+    tracks: [
+      { name: "Algorithms & Problem Solving & Problem Solving", round: "Online assessment", focus: ["DSA", "SQL"], emphasis: "fast coding and data-oriented problem solving", durationMinutes: 70 },
+      { name: "Marketplace Backend", round: "Technical screen", focus: ["APIs", "SQL", "Debugging"], emphasis: "catalog, order and payment-service correctness", durationMinutes: 60 },
+      { name: "Scale Systems", round: "System design", focus: ["System Design", "Cloud", "APIs"], emphasis: "peak traffic, caching and resilient services", durationMinutes: 65 },
+      { name: "Frontend Commerce", round: "Frontend screen", focus: ["React", "JavaScript"], emphasis: "catalog browsing, state and performance", durationMinutes: 50 },
+    ],
+  },
+  Accenture: {
+    domain: "technology consulting, enterprise applications and cloud delivery",
+    tracks: [
+      { name: "Programming & Logic", round: "Technical screen", focus: ["DSA", "Python"], emphasis: "structured problem solving and implementation", durationMinutes: 55 },
+      { name: "SQL & Data", round: "Technical screen", focus: ["SQL", "Testing"], emphasis: "data manipulation and correctness", durationMinutes: 45 },
+      { name: "Cloud & Integration", round: "Technical screen", focus: ["Cloud", "APIs"], emphasis: "enterprise integration and deployment concepts", durationMinutes: 50 },
+      { name: "Debugging Practice", round: "Technical screen", focus: ["Debugging", "Testing"], emphasis: "issue diagnosis and regression prevention", durationMinutes: 45 },
+    ],
+  },
+  Deloitte: {
+    domain: "consulting, risk, analytics and enterprise technology",
+    tracks: [
+      { name: "Problem Solving", round: "Technical screen", focus: ["DSA", "Python"], emphasis: "structured reasoning and coding fundamentals", durationMinutes: 55 },
+      { name: "Data & SQL", round: "Technical screen", focus: ["SQL", "Python"], emphasis: "business data reasoning and query design", durationMinutes: 50 },
+      { name: "Cloud Engineering", round: "Technical screen", focus: ["Cloud", "APIs", "Testing"], emphasis: "service delivery and operational correctness", durationMinutes: 55 },
+      { name: "Scenario Debugging", round: "Scenario screen", focus: ["Debugging", "System Design"], emphasis: "root-cause analysis and trade-off reasoning", durationMinutes: 45 },
+    ],
+  },
+  "JPMorgan Chase": {
+    domain: "financial services, payments and risk systems",
+    tracks: [
+      { name: "Algorithms & Problem Solving & DSA", round: "Coding screen", focus: ["DSA", "Python"], emphasis: "correctness, complexity and implementation", durationMinutes: 65 },
+      { name: "Data & SQL", round: "Technical screen", focus: ["SQL", "Testing"], emphasis: "transaction data and query correctness", durationMinutes: 55 },
+      { name: "Backend Services", round: "Technical screen", focus: ["APIs", "Debugging", "Testing"], emphasis: "service reliability, validation and diagnostics", durationMinutes: 55 },
+      { name: "Financial Systems", round: "System design", focus: ["System Design", "APIs", "Cloud"], emphasis: "resilience, auditability and transaction flows", durationMinutes: 65 },
+    ],
+  },
+  "Goldman Sachs": {
+    domain: "financial services, markets and analytical platforms",
+    tracks: [
+      { name: "Algorithms & Problem Solving", round: "Coding screen", focus: ["DSA", "Python"], emphasis: "algorithmic reasoning and implementation efficiency", durationMinutes: 65 },
+      { name: "SQL & Data", round: "Technical screen", focus: ["SQL", "Python"], emphasis: "data queries, transformations and analysis", durationMinutes: 55 },
+      { name: "Production Debugging", round: "Technical screen", focus: ["Debugging", "Testing", "APIs"], emphasis: "correctness under production constraints", durationMinutes: 55 },
+      { name: "Resilient Systems", round: "System design", focus: ["System Design", "Cloud"], emphasis: "fault tolerance, throughput and operational risk", durationMinutes: 65 },
+    ],
+  },
+  PayPal: {
+    domain: "payments, commerce infrastructure and financial APIs",
+    tracks: [
+      { name: "Algorithms & Problem Solving Assessment", round: "Online assessment", focus: ["DSA", "SQL"], emphasis: "fast coding and data reasoning", durationMinutes: 65 },
+      { name: "Payments Backend", round: "Technical screen", focus: ["APIs", "SQL", "Testing"], emphasis: "idempotency, validation and reliable service behavior", durationMinutes: 60 },
+      { name: "Payment Systems", round: "System design", focus: ["System Design", "APIs", "Cloud"], emphasis: "resilience, consistency and transaction scale", durationMinutes: 65 },
+      { name: "Risk Debugging", round: "Technical screen", focus: ["Debugging", "Testing"], emphasis: "failure analysis and correctness", durationMinutes: 50 },
+    ],
+  },
+};
 
 type QuestionSeed = { prompt: string; options: string[]; correctOption: number; points: number };
+type QuestionType = "Coding" | "SQL" | "Debugging" | "System Design";
+
+function questionTypeForTopic(topic: AssessmentTopic): QuestionType {
+  if (topic === "SQL") return "SQL";
+  if (topic === "Debugging" || topic === "Testing") return "Debugging";
+  if (topic === "System Design" || topic === "Cloud" || topic === "APIs") return "System Design";
+  return "Coding";
+}
+
+function specializedRoundTracks(profile: CompanyProfile): AssessmentTrack[] {
+  return [
+    { name: "Coding Round", round: "Coding round", focus: ["DSA", "JavaScript", "Python"], emphasis: "algorithmic problem solving, edge cases and maintainable implementation in a " + profile.domain + " setting", durationMinutes: 75 },
+    { name: "SQL & Data Round", round: "SQL round", focus: ["SQL"], emphasis: "query reasoning, joins, aggregation, data correctness and performance for a " + profile.domain + " workload", durationMinutes: 50 },
+    { name: "Debugging & Reliability Round", round: "Debugging round", focus: ["Debugging", "Testing"], emphasis: "root-cause analysis, regression prevention, async failures and reliable service behavior in a " + profile.domain + " environment", durationMinutes: 50 },
+  ];
+}
+
+function generatedQuestion(
+  questionIndex: number,
+  topic: AssessmentTopic,
+  company: string,
+  profile: CompanyProfile,
+  track: AssessmentTrack,
+  difficulty: string,
+): { prompt: string; options: string[]; correctOption: number; points: number; questionType: QuestionType; section: string } {
+  const type = questionTypeForTopic(topic);
+  const seedBank = QUESTION_BANKS[topic];
+  const seed = seedBank?.[questionIndex % (seedBank.length || 1)];
+  const n = 10 + (questionIndex % 91);
+  const m = 3 + ((questionIndex * 7) % 17);
+  const service = ["catalog", "orders", "payments", "recommendations", "identity", "search"][questionIndex % 6]!;
+  const prefix = `${company}'s ${profile.domain} context: `;
+  let prompt = seed?.prompt ?? "Choose the most appropriate engineering approach.";
+  let options = seed?.options ? [...seed.options] : ["Option A", "Option B", "Option C", "Option D"];
+  let correctOption = seed?.correctOption ?? 0;
+
+  if (type === "Coding") {
+    const codingTemplates = [
+      `A ${service} service receives an array of ${n} request times. Which approach best finds the first duplicate in one pass with expected O(n) time?`,
+      `A ${service} pipeline has ${n} records and needs the top ${m} values without fully sorting the input. Which structure is the best fit?`,
+      `A ${service} endpoint must validate a sequence of ${m + 2} nested tokens. Which approach guarantees linear-time validation?`,
+      `A ${service} cache stores ${n} keys and must evict the least recently used key. Which design gives O(1) average lookup and eviction?`,
+      `A ${service} graph has ${n} nodes and non-negative weighted edges. Which algorithm finds single-source shortest paths efficiently?`,
+      `A ${service} API sorts ${n} items by a key and must preserve the relative order of equal keys. Which property matters?`,
+      `A ${service} workflow has overlapping subproblems across ${n} states. Which technique avoids recomputing the same states?`,
+      `A ${service} dependency graph contains ${n} modules. Which technique detects whether dependencies can be processed in a valid order?`,
+    ];
+    prompt = codingTemplates[questionIndex % codingTemplates.length]!;
+    options = [
+      "Hash table / appropriate indexed structure",
+      "Nested loops over every pair",
+      "Randomized retry loop",
+      "Full recomputation for every item",
+    ];
+    correctOption = 0;
+    if (questionIndex % 8 === 1) {
+      options = ["Min/max heap with O(n log k)", "Bubble sort with O(n²)", "Queue scan with O(nk)", "Hash collision chain"];
+    } else if (questionIndex % 8 === 2) {
+      options = ["Stack", "Queue", "Binary search tree", "Hash set"];
+      correctOption = 0;
+    } else if (questionIndex % 8 === 4) {
+      options = ["Dijkstra", "DFS only", "Kruskal only", "BFS on weighted edges"];
+      correctOption = 0;
+    }
+  } else if (type === "SQL") {
+    const sqlTemplates = [
+      `The ${service} table has ${n * 1000} rows. You need one row per customer with only customers whose total value exceeds ${m * 100}. Which SQL pattern is correct?`,
+      `A ${service} query joins a fact table with a dimension table and unexpectedly multiplies rows. What should you verify first?`,
+      `A ${service} report filters grouped results after aggregation. Which clause belongs after GROUP BY?`,
+      `A ${service} lookup repeatedly filters on customer_id and created_at. Which index shape is generally most useful for the combined predicate?`,
+      `A ${service} pipeline must rank each customer's events by timestamp without collapsing the rows. Which SQL feature is most appropriate?`,
+      `A ${service} report needs rows present in the left table even when no matching right-side record exists. Which JOIN is appropriate?`,
+      `A ${service} transaction must not read another transaction's uncommitted changes. Which isolation level provides that guarantee?`,
+      `A ${service} cleanup removes duplicate logical records while keeping one canonical row. Which technique is most suitable?`,
+    ];
+    prompt = sqlTemplates[questionIndex % sqlTemplates.length]!;
+    options = ["Use the SQL construct that preserves row semantics and applies the filter at the correct stage", "Move every condition into ORDER BY", "Use CROSS JOIN for every relationship", "Replace SQL with a client-side loop"];
+    correctOption = 0;
+    if (questionIndex % 8 === 2) { options = ["HAVING", "WHERE", "ORDER BY", "LIMIT"]; correctOption = 0; }
+    if (questionIndex % 8 === 3) { options = ["Composite index on the filtered columns in predicate order", "Drop all indexes", "Full scan is always faster", "Create a random single-column index"]; correctOption = 0; }
+    if (questionIndex % 8 === 4) { options = ["Window function", "GROUP BY only", "DISTINCT only", "UNION ALL"]; correctOption = 0; }
+    if (questionIndex % 8 === 5) { options = ["LEFT JOIN", "INNER JOIN", "CROSS JOIN", "FULL DELETE"]; correctOption = 0; }
+    if (questionIndex % 8 === 6) { options = ["Read committed", "Read uncommitted", "No isolation", "Read only"]; correctOption = 0; }
+    if (questionIndex % 8 === 7) { options = ["ROW_NUMBER() over a partition, then keep one row", "CROSS JOIN and delete randomly", "ORDER BY without partitioning", "COUNT() without a key"]; correctOption = 0; }
+  } else if (type === "Debugging") {
+    const debugTemplates = [
+      `After a deployment, ${service} requests intermittently fail only under parallel load. What should you investigate first?`,
+      `A ${service} test passes locally but fails in CI with stale state. What is the strongest first debugging move?`,
+      `A React client for ${service} shows repeated requests after a state update. Which investigation is most relevant?`,
+      `An async ${service} handler sometimes returns before its dependency finishes. What is the likely class of defect?`,
+      `A ${service} API retries rapidly when the downstream is slow, increasing the outage. Which mitigation addresses the failure mode?`,
+      `A ${service} bug appears only at the final item in a list of ${n}. What class of defect should you inspect first?`,
+      `A ${service} endpoint starts consuming memory after every request. Which evidence is most useful to collect?`,
+      `A ${service} change fixes the visible symptom but the same failure reappears through another path. What principle was missed?`,
+    ];
+    prompt = debugTemplates[questionIndex % debugTemplates.length]!;
+    options = ["Capture a minimal reproduction, relevant logs/state, and isolate the failing dependency", "Disable all tests", "Retry endlessly", "Delete the feature before observing it"];
+    correctOption = 0;
+    if (questionIndex % 8 === 3) { options = ["Missing await / incorrect async control flow", "CSS specificity", "Database normalization", "Hash collision"]; correctOption = 0; }
+    if (questionIndex % 8 === 4) { options = ["Backoff + bounded retries / circuit breaking", "Infinite retries", "Remove timeouts", "Ignore downstream health"]; correctOption = 0; }
+    if (questionIndex % 8 === 5) { options = ["Off-by-one / boundary condition", "DNS caching", "SQL normalization", "Font loading"]; correctOption = 0; }
+    if (questionIndex % 8 === 6) { options = ["Heap/profile data and request-lifecycle evidence", "Only a screenshot", "CSS source map only", "Browser history"]; correctOption = 0; }
+    if (questionIndex % 8 === 7) { options = ["Fix the root cause", "Hide the error message", "Remove observability", "Add random delays"]; correctOption = 0; }
+  }
+
+  const level = difficulty === "Hard" || difficulty === "Medium → Hard" ? 2 : 1;
+  return {
+    prompt: prefix + prompt + ` This is an original Dhyavora ${track.name} question; it is not copied from a company test.`,
+    options,
+    correctOption,
+    points: level,
+    questionType: type,
+    section: track.name,
+  };
+}
+
 
 const QUESTION_BANKS: Record<string, QuestionSeed[]> = {
   DSA: [
@@ -158,41 +473,49 @@ export function isVirtualAssessmentId(id: string) {
 
 function valuesForIndex(index: number) {
   const company = COMPANIES[index % COMPANIES.length]!;
+  const profile = COMPANY_PROFILES[company]!;
   const career = CAREERS[Math.floor(index / COMPANIES.length) % CAREERS.length]!;
   const role = ROLES[Math.floor(index / (COMPANIES.length * CAREERS.length)) % ROLES.length]!;
   const difficulty = DIFFICULTIES[Math.floor(index / (COMPANIES.length * CAREERS.length * ROLES.length)) % DIFFICULTIES.length]!;
-  const topic = TOPICS[Math.floor(index / (COMPANIES.length * CAREERS.length * ROLES.length * DIFFICULTIES.length)) % TOPICS.length]!;
-  return { company, career, role, difficulty, topic };
+  const trackPool = [...profile.tracks, ...specializedRoundTracks(profile)];
+  const track = trackPool[Math.floor(index / (COMPANIES.length * CAREERS.length * ROLES.length * DIFFICULTIES.length)) % trackPool.length]!;
+  const variant = Math.floor(index / (COMPANIES.length * CAREERS.length * ROLES.length * DIFFICULTIES.length * trackPool.length)) + 1;
+  return { company, profile, career, role, difficulty, track, variant };
 }
 
 export function getVirtualAssessment(index: number): VirtualAssessment {
-  const { company, career, role, difficulty, topic } = valuesForIndex(index);
-  const bank = QUESTION_BANKS[topic]!;
-  const questions = Array.from({ length: 8 }, (_, qIndex) => {
-    const source = bank[(index * 3 + qIndex) % bank.length]!;
+  const { company, profile, career, role, difficulty, track, variant } = valuesForIndex(index);
+  const topics = track.focus;
+  const questions = Array.from({ length: 10 }, (_, qIndex) => {
+    const topic = topics[qIndex % topics.length]!;
     return {
       id: String(qIndex),
-      prompt: `In this original Dhyavora ${company} preparation simulation (#${index + 1}), ${source.prompt}`,
-      options: [...source.options],
-      correctOption: source.correctOption,
-      points: source.points,
+      ...generatedQuestion(variant * 11 + qIndex, topic, company, profile, track, difficulty),
     };
   });
   return {
     _id: virtualId(index),
-    title: `${company} · ${role} · ${topic} · ${difficulty} — Simulation #${String(index + 1).padStart(6, "0")}`,
+    title: `${company} · ${role} · ${track.name} · ${difficulty} · Set ${String(variant).padStart(4, "0")}`,
     data: {
-      description: `Original Dhyavora preparation simulation oriented around ${company}, ${career}, and ${role}. Not a leaked or copied company test.`,
-      durationMinutes: difficulty === "Easy" ? 12 : difficulty === "Medium" ? 18 : difficulty === "Hard" ? 25 : 22,
-      negativeMark: difficulty === "Hard" ? 0.25 : 0,
+      description: `Original Dhyavora ${profile.domain} preparation simulation for ${career} / ${role}. Track: ${track.round}. Focus: ${track.emphasis}. This is an original simulation, not a leaked or copied company test.`,
+      durationMinutes: Math.max(30, track.durationMinutes - (difficulty === "Easy" ? 10 : difficulty === "Hard" ? -10 : difficulty === "Medium → Hard" ? -5 : 0)),
+      negativeMark: difficulty === "Hard" || difficulty === "Medium → Hard" ? 0.25 : 0,
       career,
       company,
       role,
       difficulty,
-      topics: [topic],
+      topics: [...topics],
       assessmentType: "MCQ",
       active: true,
       virtual: true,
+      assessmentTrack: track.name,
+      assessmentRound: track.round,
+      companyDomain: profile.domain,
+      questionBankSize: COMPANY_QUESTION_BANK_SIZE,
+      blueprint: {
+        focus: topics.map((topic, focusIndex) => ({ topic, weight: focusIndex === 0 ? 50 : Math.floor(50 / Math.max(1, topics.length - 1)) })),
+        emphasis: track.emphasis,
+      },
       questions,
     },
   };

@@ -275,3 +275,14 @@
 .assessment-card{transition:border-color .2s ease,box-shadow .2s ease,background .2s ease}
 .assessment-card:hover{border-color:#39d89b38;background:linear-gradient(145deg,#15211b,#101714);box-shadow:0 16px 42px #00000018}
 @media (max-width:720px){.assessment-search-head,.assessment-pagination{align-items:stretch;flex-direction:column}.assessment-count-badge{width:max-content}.assessment-pagination>div{justify-content:space-between}.assessment-page-number{flex:1}}
+
+.assessment-ladder{display:flex;align-items:center;gap:5px;margin:2px 0 9px;color:#4e5e55;font-size:9px}
+.assessment-step{font-size:9px;opacity:.55;transition:transform .2s ease,opacity .2s ease;color:#738178}
+.assessment-step.active{opacity:1;color:#45dc9d;transform:scale(1.2)}
+.assessment-ladder small{margin-left:5px;padding-left:7px;border-left:1px solid var(--line);color:#7c8981;font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.assessment-card:hover .assessment-step.active{animation:assessment-pulse 1.1s ease-in-out infinite}
+@keyframes assessment-pulse{0%,100%{transform:scale(1.15)}50%{transform:scale(1.38)}}
+
+.assessment-bank-note{margin:-1px 0 10px;color:#6f7d74;font-size:8px;line-height:1.45;letter-spacing:.01em}
+.question-meta span{color:#6f7d74}
+.assessment-card:hover .assessment-bank-note{color:#81988b}

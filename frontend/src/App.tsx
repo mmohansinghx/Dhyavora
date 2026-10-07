@@ -140,7 +140,7 @@ function ResourcePage({ kind, title, kicker, description, fields, hideHeading = 
   </>;
 }
 
-type Assessment = Row & { data: { durationMinutes: number; description?: string; questions: Array<{ id: string; prompt: string; options: string[] }>; career?: string; company?: string; role?: string; difficulty?: string; topics?: string[]; assessmentType?: string } };
+type Assessment = Row & { data: { durationMinutes: number; description?: string; questions: Array<{ id: string; prompt: string; options: string[]; questionType?: string; section?: string }>; career?: string; company?: string; role?: string; difficulty?: string; topics?: string[]; assessmentType?: string; assessmentTrack?: string; assessmentRound?: string; questionBankSize?: number } };
 type Attempt = { attemptId: string; startedAt: string; durationMinutes: number; questions: Assessment["data"]["questions"] };
 type AssessmentPagePayload = {
   data: Assessment[];
@@ -243,7 +243,7 @@ function AssessmentPage() {
       </div>
       <div className="question-list">{attempt.questions.map((question, index) =>
         <motion.article className="question-card" key={question.id} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * .035 }}>
-          <div className="question-meta"><span>QUESTION {String(index + 1).padStart(2, "0")}</span><button className={`review-button ${marked[String(index)] ? "marked" : ""}`} onClick={() => void answer(index, answers[String(index)], !marked[String(index)])}><CheckCircle2 size={14} /> {marked[String(index)] ? "Marked" : "Mark for review"}</button></div>
+          <div className="question-meta"><span>QUESTION {String(index + 1).padStart(2, "0")}{question.questionType ? ` · ${question.questionType.toUpperCase()}` : ""}</span><button className={`review-button ${marked[String(index)] ? "marked" : ""}`} onClick={() => void answer(index, answers[String(index)], !marked[String(index)])}><CheckCircle2 size={14} /> {marked[String(index)] ? "Marked" : "Mark for review"}</button></div>
           <h3>{question.prompt}</h3>
           <div className="answer-options">{question.options.map((option, optionIndex) => <motion.label whileHover={{ y: -1 }} key={`${question.id}-${optionIndex}`} className={`answer-option ${answers[String(index)] === optionIndex ? "chosen" : ""}`}><input type="radio" name={`question-${index}`} checked={answers[String(index)] === optionIndex} onChange={() => void answer(index, optionIndex)} /><span className="option-letter">{String.fromCharCode(65 + optionIndex)}</span><span>{option}</span></motion.label>)}</div>
         </motion.article>
@@ -288,8 +288,12 @@ function AssessmentPage() {
           {items.map((item, index) => <motion.article key={item._id} className="record-card assessment-card" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} whileHover={{ y: -4 }} transition={{ duration: .28, delay: index * .025 }}>
             <div className="record-card-top"><span className="record-icon coral-text"><ClipboardCheck size={16} /></span><span className="duration-pill">{item.data.durationMinutes} min</span></div>
             <h3>{item.title}</h3>
-            <p>{item.data.description ?? "Focused preparation for your target role."}</p>
-            <div className="record-meta">{item.data.company && <span>{item.data.company}</span>}{item.data.career && <span>{item.data.career}</span>}{item.data.role && <span>{item.data.role}</span>}{item.data.difficulty && <span>{item.data.difficulty}</span>}</div>
+            <p>{item.data.description ?? "Focused preparation for your target role."}</p><div className="assessment-bank-note">{item.data.questionBankSize ? `${item.data.questionBankSize}+ original questions in this company pool` : "Original question pool"} · {item.data.assessmentRound ?? "Technical simulation"}</div>
+            <div className="record-meta">{item.data.company && <span>{item.data.company}</span>}{item.data.career && <span>{item.data.career}</span>}{item.data.role && <span>{item.data.role}</span>}{item.data.difficulty && <span>{item.data.difficulty}</span>}{item.data.assessmentTrack && <span>{item.data.assessmentTrack}</span>}</div>
+            <div className="assessment-ladder" aria-label={`Difficulty progression: Easy, Medium, Hard, Medium to Hard`}>
+              {["Easy", "Medium", "Hard", "Medium → Hard"].map((level) => <span key={level} className={`assessment-step ${level === item.data.difficulty ? "active" : ""}`} title={level}>{level === item.data.difficulty ? "●" : "○"}</span>)}
+              <small>{item.data.assessmentRound ?? "Technical simulation"}</small>
+            </div>
             {item.data.topics?.length ? <div className="skill-pills">{item.data.topics.slice(0, 5).map((topic) => <span className="skill-pill" key={topic}>{topic}</span>)}</div> : null}
             <button className="button button-soft button-small" onClick={() => start.mutate(item._id)} disabled={start.isPending}>{start.isPending ? "Starting…" : "Start simulation"}<ArrowRight size={14} /></button>
           </motion.article>)}
