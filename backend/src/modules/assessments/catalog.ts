@@ -157,19 +157,19 @@ export function isVirtualAssessmentId(id: string) {
 }
 
 function valuesForIndex(index: number) {
-  const company = COMPANIES[index % COMPANIES.length];
-  const career = CAREERS[Math.floor(index / COMPANIES.length) % CAREERS.length];
-  const role = ROLES[Math.floor(index / (COMPANIES.length * CAREERS.length)) % ROLES.length];
-  const difficulty = DIFFICULTIES[Math.floor(index / (COMPANIES.length * CAREERS.length * ROLES.length)) % DIFFICULTIES.length];
-  const topic = TOPICS[Math.floor(index / (COMPANIES.length * CAREERS.length * ROLES.length * DIFFICULTIES.length)) % TOPICS.length];
+  const company = COMPANIES[index % COMPANIES.length]!;
+  const career = CAREERS[Math.floor(index / COMPANIES.length) % CAREERS.length]!;
+  const role = ROLES[Math.floor(index / (COMPANIES.length * CAREERS.length)) % ROLES.length]!;
+  const difficulty = DIFFICULTIES[Math.floor(index / (COMPANIES.length * CAREERS.length * ROLES.length)) % DIFFICULTIES.length]!;
+  const topic = TOPICS[Math.floor(index / (COMPANIES.length * CAREERS.length * ROLES.length * DIFFICULTIES.length)) % TOPICS.length]!;
   return { company, career, role, difficulty, topic };
 }
 
 export function getVirtualAssessment(index: number): VirtualAssessment {
   const { company, career, role, difficulty, topic } = valuesForIndex(index);
-  const bank = QUESTION_BANKS[topic];
+  const bank = QUESTION_BANKS[topic]!;
   const questions = Array.from({ length: 8 }, (_, qIndex) => {
-    const source = bank[(index * 3 + qIndex) % bank.length];
+    const source = bank[(index * 3 + qIndex) % bank.length]!;
     return {
       id: String(qIndex),
       prompt: `In this original Dhyavora ${company} preparation simulation (#${index + 1}), ${source.prompt}`,
