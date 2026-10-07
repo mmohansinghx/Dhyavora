@@ -144,10 +144,10 @@ function toList(value?: string | string[]) {
   if (typeof value === "string") return value.split(",").map((item) => item.trim()).filter(Boolean);
   return [];
 }
-function scorePercent(attempts: Array<Row<AssessmentAttemptData>>) {
-  const scored = attempts.map((row) => row.data.result).filter((result): result is NonNullable<AssessmentAttemptData["result"]> => Boolean(result && typeof result.score === "number" && typeof result.questionCount === "number" && result.questionCount > 0));
+function assessmentAccuracy(attempts: Array<Row<AssessmentAttemptData>>) {
+  const scored = attempts.map((row) => row.data.result).filter((result): result is NonNullable<AssessmentAttemptData["result"]> => Boolean(result && typeof result.correct === "number" && typeof result.questionCount === "number" && result.questionCount > 0));
   if (!scored.length) return undefined;
-  return Math.round(scored.reduce((sum, result) => sum + ((result.score ?? 0) / (result.questionCount ?? 1)) * 100, 0) / scored.length);
+  return Math.round(scored.reduce((sum, result) => sum + ((result.correct ?? 0) / (result.questionCount ?? 1)) * 100, 0) / scored.length);
 }
 function currentWeekCount(items: Array<{ createdAt?: string; updatedAt?: string }>) {
   const now = new Date();
@@ -200,7 +200,6 @@ function CareerHero({ title, eyebrow, description, action }: { title: string; ey
 function OverviewPage() {
   const data = useCareerData();
   const qc = useQueryClient();
-  const [pace, setPace] = useState(8);
   const profile = data.profile;
   const selected = data.gap.data?.career;
   const readiness = data.gap.data?.readiness;
@@ -208,7 +207,7 @@ function OverviewPage() {
   const tasks = roadmap?.data.tasks ?? [];
   const completedTasks = tasks.filter((task) => task.status === "COMPLETED").length;
   const nextTask = tasks.find((task) => task.status === "IN_PROGRESS") ?? tasks.find((task) => task.status !== "COMPLETED");
-  const assessmentScore = scorePercent(data.assessments.data ?? []);
+  const assessmentAccuracyValue = assessmentAccuracy(data.assessments.data ?? []);
   const githubConnected = Object.values(data.integrations.data ?? {}).some((item) => item.state === "CONNECTED" && (item.provider ?? "").toLowerCase().includes("github"));
   const resumeAvailable = (data.resume.data?.length ?? 0) > 0;
   const projectCount = data.projects.data?.length ?? 0;
@@ -496,7 +495,7 @@ function ProgressPage() {
   const data = useCareerData();
   const tasks = data.roadmaps.data?.flatMap((row) => row.data.tasks ?? []) ?? [];
   const completed = tasks.filter((task) => task.status === "COMPLETED").length;
-  const assessment = scorePercent(data.assessments.data ?? []);
+  const assessment = assessmentAccuracy(data.assessments.data ?? []);
   const projectCount = data.projects.data?.length ?? 0;
   const learningCount = data.learning.data?.length ?? 0;
   const interviewCount = data.interviews.data?.length ?? 0;
