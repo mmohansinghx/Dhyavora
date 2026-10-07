@@ -256,3 +256,22 @@
   .ci-activity { grid-template-columns: 30px 1fr; }
   .ci-activity small { grid-column: 2; }
 }
+
+/* Assessment Hub advanced catalog */
+.assessment-search-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:14px}
+.assessment-search-head h2{font:600 17px var(--serif);letter-spacing:-.03em;margin:5px 0 5px;color:#e8eee8}
+.assessment-search-head p{margin:0;color:#7f8c84;font-size:9px;line-height:1.6;max-width:650px}
+.assessment-count-badge{flex:0 0 auto;border:1px solid #36d89a33;background:#27c98012;color:#65e1ac;border-radius:999px;padding:7px 10px;font-size:9px;font-weight:700}
+.assessment-hub-search{position:relative;overflow:hidden}
+.assessment-hub-search::before{content:"";position:absolute;inset:-160px auto auto 40%;width:330px;height:260px;background:radial-gradient(circle,#27d89a14,transparent 68%);pointer-events:none}
+.assessment-search,.assessment-filters,.assessment-search-head,.clear-filters{position:relative;z-index:1}
+.clear-filters{margin-top:9px;border:0;background:none;color:#59dca3;font-size:8px;font-weight:650;padding:0}
+.clear-filters:hover{color:#b1f3d3}
+.advanced-assessment-banner{position:relative;overflow:hidden}
+.advanced-assessment-banner::after{content:"";position:absolute;right:-50px;top:-75px;width:210px;height:210px;border:1px solid #43d99d1f;border-radius:50%;box-shadow:0 0 0 24px #43d99d08,0 0 0 51px #43d99d05}
+.assessment-pagination{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:12px 0 14px;color:#748279;font-size:9px}
+.assessment-pagination>div{display:flex;align-items:center;gap:8px}
+.assessment-page-number{min-width:92px;text-align:center;color:#a2aea5;font-size:9px}
+.assessment-card{transition:border-color .2s ease,box-shadow .2s ease,background .2s ease}
+.assessment-card:hover{border-color:#39d89b38;background:linear-gradient(145deg,#15211b,#101714);box-shadow:0 16px 42px #00000018}
+@media (max-width:720px){.assessment-search-head,.assessment-pagination{align-items:stretch;flex-direction:column}.assessment-count-badge{width:max-content}.assessment-pagination>div{justify-content:space-between}.assessment-page-number{flex:1}}
