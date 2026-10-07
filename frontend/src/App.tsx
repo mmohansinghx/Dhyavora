@@ -2,8 +2,8 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { Activity, ArrowRight, ArrowUpRight, Bell, BriefcaseBusiness, Check, CheckCircle2, ChevronDown, CircleHelp, ClipboardCheck, Clock, Code2, Compass, FileText, Flag, GraduationCap, LayoutDashboard, LogOut, Menu, MessageCircle, Plus, Search, Send, Settings, ShieldAlert, Sparkles, Target, TrendingUp, Users, X } from "lucide-react";
-import { type CareerMatch, type ReadinessSummary, type Skill, type SkillGapItem, type SkillLeverage } from "@dhyavora/contracts";
+import { Activity, ArrowRight, ArrowUpRight, Bell, BriefcaseBusiness, Check, CheckCircle2, ChevronDown, CircleHelp, ClipboardCheck, Code2, Compass, FileText, GraduationCap, LayoutDashboard, LogOut, Menu, MessageCircle, Plus, Search, Send, Settings, ShieldAlert, Sparkles, Target, Users, X } from "lucide-react";
+import { type SkillGapItem } from "@dhyavora/contracts";
 import { api } from "./api";
 import { useAuth } from "./auth";
 import { SkillPill } from "./ui";
@@ -116,28 +116,6 @@ function DashboardPage({ name }: { name: string }) {
       {gap.isLoading ? <LoadingLine /> : gap.data?.gap?.length ? <><div className="coverage-bar"><span style={{ width: `${gap.data.coverage}%` }} /></div><div className="skill-row">{gap.data.gap.slice(0, 6).map((item) => <SkillPill key={item.name} item={item} />)}</div></> : <EmptyState title="Your career map takes shape here" text="Add your skills and choose a career to see the shared skill-gap engine at work." action={<Link to="/career" className="text-action">Set a target career <ArrowRight size={14} /></Link>} />}</section>
     <div className="dashboard-bottom"><Link to="/assessments" className="quick-card"><div className="quick-icon coral"><ClipboardCheck size={18} /></div><div><strong>Check your skills</strong><span>Take an assessment</span></div><ArrowUpRight size={15} /></Link><Link to="/opportunities" className="quick-card"><div className="quick-icon blue"><Search size={18} /></div><div><strong>Find an opening</strong><span>Save an opportunity</span></div><ArrowUpRight size={15} /></Link><Link to="/copilot" className="quick-card"><div className="quick-icon violet"><Sparkles size={18} /></div><div><strong>Think it through</strong><span>Ask your career copilot</span></div><ArrowUpRight size={15} /></Link></div>
   </>;
-}
-
-const LEVEL_ORDER = ["BEGINNER", "INTERMEDIATE", "ADVANCED", "EXPERT"] as const;
-const PHASES = [
-  { key: "FOUNDATION", label: "Foundation", hint: "Learn the core ideas" },
-  { key: "BUILD", label: "Build", hint: "Practise on real problems" },
-  { key: "PROVE", label: "Prove", hint: "Show evidence of the skill" },
-] as const;
-const STATUS_STEPS = [["TODO", "To do"], ["IN_PROGRESS", "In progress"], ["COMPLETED", "Done"]] as const;
-type GapPayload = { career?: Career; gap: SkillGapItem[]; coverage: number; readiness?: ReadinessSummary };
-type MatchesPayload = { matches: CareerMatch[]; leverage?: SkillLeverage[]; reason?: string };
-const HOURS_PER_LEVEL_STEP = 24;
-const LEVEL_LABEL: Record<string, string> = { NONE: "Not started", BEGINNER: "Beginner", INTERMEDIATE: "Intermediate", ADVANCED: "Advanced", EXPERT: "Expert" };
-
-function ReadinessRing({ value }: { value: number }) {
-  const radius = 44; const circumference = 2 * Math.PI * radius;
-  return <div className="readiness-ring" role="img" aria-label={`${value}% ready`}><svg viewBox="0 0 108 108"><circle cx="54" cy="54" r={radius} className="ring-track" /><circle cx="54" cy="54" r={radius} className="ring-value" strokeDasharray={circumference} strokeDashoffset={circumference * (1 - Math.min(100, Math.max(0, value)) / 100)} transform="rotate(-90 54 54)" /></svg><div><strong>{value}%</strong><span>ready</span></div></div>;
-}
-
-function LevelMeter({ item }: { item: SkillGapItem }) {
-  const current = item.currentLevel ? LEVEL_ORDER.indexOf(item.currentLevel) + 1 : 0; const required = LEVEL_ORDER.indexOf(item.requiredLevel) + 1;
-  return <div className="level-meter" aria-label={`Current ${item.currentLevel ?? "none"}, required ${item.requiredLevel}`}>{LEVEL_ORDER.map((level, index) => <span key={level} title={level.toLowerCase()} className={`${index < current ? "have" : ""} ${index + 1 === required ? "target" : ""}`} />)}</div>;
 }
 
 function AssessmentPage() {
