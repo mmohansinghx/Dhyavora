@@ -282,3 +282,7 @@
 .assessment-ladder small{margin-left:5px;padding-left:7px;border-left:1px solid var(--line);color:#7c8981;font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .assessment-card:hover .assessment-step.active{animation:assessment-pulse 1.1s ease-in-out infinite}
 @keyframes assessment-pulse{0%,100%{transform:scale(1.15)}50%{transform:scale(1.38)}}
+
+.assessment-bank-note{margin:-1px 0 10px;color:#6f7d74;font-size:8px;line-height:1.45;letter-spacing:.01em}
+.question-meta span{color:#6f7d74}
+.assessment-card:hover .assessment-bank-note{color:#81988b}
