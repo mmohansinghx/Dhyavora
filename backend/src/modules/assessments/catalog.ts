@@ -66,7 +66,7 @@ const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   Amazon: {
     domain: "commerce, logistics and cloud",
     tracks: [
-      { name: "Coding OA", round: "Online assessment", focus: ["DSA", "Debugging"], emphasis: "data structures, edge cases and implementation discipline", durationMinutes: 70 },
+      { name: "Algorithms & Problem Solving & Problem Solving", round: "Online assessment", focus: ["DSA", "Debugging"], emphasis: "data structures, edge cases and implementation discipline", durationMinutes: 70 },
       { name: "Backend Foundations", round: "Technical screen", focus: ["APIs", "SQL", "Testing"], emphasis: "service contracts, data access and production correctness", durationMinutes: 55 },
       { name: "Systems at Scale", round: "System design", focus: ["System Design", "Cloud", "APIs"], emphasis: "scalable services, reliability and operational trade-offs", durationMinutes: 65 },
       { name: "Leadership Scenario", round: "Scenario screen", focus: ["Behavioral/Scenario", "Debugging"], emphasis: "ownership, trade-offs and incident reasoning", durationMinutes: 35 },
@@ -75,7 +75,7 @@ const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   Google: {
     domain: "search, distributed infrastructure and developer platforms",
     tracks: [
-      { name: "Algorithms & Problem Solving", round: "Coding screen", focus: ["DSA", "Python"], emphasis: "algorithmic reasoning, complexity and clean implementation", durationMinutes: 70 },
+      { name: "Algorithms & Problem Solving & Problem Solving", round: "Coding screen", focus: ["DSA", "Python"], emphasis: "algorithmic reasoning, complexity and clean implementation", durationMinutes: 70 },
       { name: "Code Quality & Debugging", round: "Technical screen", focus: ["Debugging", "Testing"], emphasis: "reasoning from failures and making precise fixes", durationMinutes: 55 },
       { name: "Systems Design", round: "System design", focus: ["System Design", "APIs", "Cloud"], emphasis: "distributed design, interfaces and reliability", durationMinutes: 65 },
       { name: "Frontend Systems", round: "Frontend screen", focus: ["JavaScript", "React", "APIs"], emphasis: "state, rendering, asynchronous flows and data fetching", durationMinutes: 55 },
@@ -84,7 +84,7 @@ const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   Microsoft: {
     domain: "cloud, productivity software and developer tools",
     tracks: [
-      { name: "Coding & CS Core", round: "Technical screen", focus: ["DSA", "Python"], emphasis: "problem solving and core programming concepts", durationMinutes: 65 },
+      { name: "Programming & CS Core", round: "Technical screen", focus: ["DSA", "Python"], emphasis: "problem solving and core programming concepts", durationMinutes: 65 },
       { name: "Debugging & Testing", round: "Technical screen", focus: ["Debugging", "Testing"], emphasis: "diagnosis, test design and regression prevention", durationMinutes: 50 },
       { name: "Cloud & Services", round: "System design", focus: ["Cloud", "APIs", "System Design"], emphasis: "service architecture, availability and platform thinking", durationMinutes: 60 },
       { name: "Web Engineering", round: "Frontend screen", focus: ["JavaScript", "React", "APIs"], emphasis: "web performance, state and API integration", durationMinutes: 55 },
@@ -93,7 +93,7 @@ const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   Meta: {
     domain: "social products, messaging and large-scale consumer applications",
     tracks: [
-      { name: "Coding Core", round: "Coding screen", focus: ["DSA", "Debugging"], emphasis: "fast problem solving and robust edge-case handling", durationMinutes: 65 },
+      { name: "Algorithms & Problem Solving Core", round: "Coding screen", focus: ["DSA", "Debugging"], emphasis: "fast problem solving and robust edge-case handling", durationMinutes: 65 },
       { name: "Product Engineering", round: "Technical screen", focus: ["JavaScript", "React", "APIs"], emphasis: "product-facing engineering and client-server flows", durationMinutes: 55 },
       { name: "Distributed Systems", round: "System design", focus: ["System Design", "APIs", "Cloud"], emphasis: "high-throughput services, consistency and resilience", durationMinutes: 65 },
       { name: "Performance & Reliability", round: "Technical screen", focus: ["Debugging", "Testing", "APIs"], emphasis: "latency, regressions and production reliability", durationMinutes: 50 },
@@ -121,7 +121,7 @@ const COMPANY_PROFILES: Record<string, CompanyProfile> = {
     domain: "creative software, documents and cloud experiences",
     tracks: [
       { name: "Web Engineering", round: "Frontend screen", focus: ["JavaScript", "React", "APIs"], emphasis: "frontend architecture, async flows and UX reliability", durationMinutes: 55 },
-      { name: "Coding & Algorithms", round: "Coding screen", focus: ["DSA", "Python"], emphasis: "problem solving and implementation quality", durationMinutes: 60 },
+      { name: "Algorithms & Problem Solving & Problem Solving", round: "Coding screen", focus: ["DSA", "Python"], emphasis: "problem solving and implementation quality", durationMinutes: 60 },
       { name: "Data & SQL", round: "Technical screen", focus: ["SQL", "Testing"], emphasis: "analytics queries and correctness under edge cases", durationMinutes: 50 },
       { name: "Cloud Services", round: "System design", focus: ["Cloud", "APIs", "System Design"], emphasis: "service design and scalable cloud workloads", durationMinutes: 60 },
     ],
@@ -130,7 +130,7 @@ const COMPANY_PROFILES: Record<string, CompanyProfile> = {
     domain: "enterprise cloud, CRM workflows and platform APIs",
     tracks: [
       { name: "Enterprise Backend", round: "Technical screen", focus: ["APIs", "SQL", "Testing"], emphasis: "business workflows, data integrity and service contracts", durationMinutes: 60 },
-      { name: "Coding Core", round: "Coding screen", focus: ["DSA", "Debugging"], emphasis: "algorithmic reasoning and reliable implementation", durationMinutes: 60 },
+      { name: "Algorithms & Problem Solving Core", round: "Coding screen", focus: ["DSA", "Debugging"], emphasis: "algorithmic reasoning and reliable implementation", durationMinutes: 60 },
       { name: "Platform Architecture", round: "System design", focus: ["System Design", "Cloud", "APIs"], emphasis: "multi-tenant thinking, scale and reliability", durationMinutes: 65 },
       { name: "Frontend Platform", round: "Frontend screen", focus: ["JavaScript", "React"], emphasis: "stateful enterprise interfaces and data fetching", durationMinutes: 50 },
     ],
@@ -147,7 +147,7 @@ const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   IBM: {
     domain: "enterprise technology, cloud and AI platforms",
     tracks: [
-      { name: "Coding Foundations", round: "Technical screen", focus: ["DSA", "Python"], emphasis: "programming fundamentals and algorithmic thinking", durationMinutes: 60 },
+      { name: "Programming Foundations", round: "Technical screen", focus: ["DSA", "Python"], emphasis: "programming fundamentals and algorithmic thinking", durationMinutes: 60 },
       { name: "Cloud & APIs", round: "Technical screen", focus: ["Cloud", "APIs"], emphasis: "service integration and deployment-aware design", durationMinutes: 55 },
       { name: "Data Engineering", round: "Technical screen", focus: ["SQL", "Python", "Testing"], emphasis: "data pipelines and correctness", durationMinutes: 60 },
       { name: "Systems & Reliability", round: "System design", focus: ["System Design", "Debugging"], emphasis: "resilience, observability and fault isolation", durationMinutes: 60 },
@@ -156,7 +156,7 @@ const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   NVIDIA: {
     domain: "accelerated computing, AI infrastructure and developer platforms",
     tracks: [
-      { name: "Algorithms & Performance", round: "Coding screen", focus: ["DSA", "Python"], emphasis: "algorithmic efficiency and performance-aware reasoning", durationMinutes: 65 },
+      { name: "Algorithms & Problem Solving & Performance", round: "Coding screen", focus: ["DSA", "Python"], emphasis: "algorithmic efficiency and performance-aware reasoning", durationMinutes: 65 },
       { name: "Systems Debugging", round: "Technical screen", focus: ["Debugging", "Testing"], emphasis: "low-level reasoning and failure isolation", durationMinutes: 55 },
       { name: "AI Platform Services", round: "Technical screen", focus: ["Python", "APIs", "Cloud"], emphasis: "model-serving workflows and service design", durationMinutes: 60 },
       { name: "Scalable Infrastructure", round: "System design", focus: ["System Design", "Cloud"], emphasis: "throughput, compute efficiency and resilience", durationMinutes: 65 },
@@ -165,7 +165,7 @@ const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   Uber: {
     domain: "mobility, marketplaces and real-time logistics",
     tracks: [
-      { name: "Coding & DSA", round: "Coding screen", focus: ["DSA", "Debugging"], emphasis: "real-time problem solving and edge cases", durationMinutes: 65 },
+      { name: "Algorithms & Problem Solving & DSA", round: "Coding screen", focus: ["DSA", "Debugging"], emphasis: "real-time problem solving and edge cases", durationMinutes: 65 },
       { name: "Backend & APIs", round: "Technical screen", focus: ["APIs", "SQL", "Testing"], emphasis: "transactional services and API correctness", durationMinutes: 60 },
       { name: "Real-Time Systems", round: "System design", focus: ["System Design", "Cloud", "APIs"], emphasis: "low-latency systems, load and resilience", durationMinutes: 70 },
       { name: "Data & Experimentation", round: "Technical screen", focus: ["SQL", "Python"], emphasis: "marketplace data and analytical reasoning", durationMinutes: 50 },
@@ -174,7 +174,7 @@ const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   Atlassian: {
     domain: "collaboration software, developer tools and cloud products",
     tracks: [
-      { name: "Coding Fundamentals", round: "Coding screen", focus: ["DSA", "Python"], emphasis: "clean solutions and engineering trade-offs", durationMinutes: 60 },
+      { name: "Programming Fundamentals", round: "Coding screen", focus: ["DSA", "Python"], emphasis: "clean solutions and engineering trade-offs", durationMinutes: 60 },
       { name: "Developer Platform", round: "Technical screen", focus: ["APIs", "JavaScript", "Testing"], emphasis: "integration design and developer experience", durationMinutes: 55 },
       { name: "Cloud Systems", round: "System design", focus: ["System Design", "Cloud"], emphasis: "multi-tenant services and reliability", durationMinutes: 60 },
       { name: "Frontend Applications", round: "Frontend screen", focus: ["React", "JavaScript", "APIs"], emphasis: "state, rendering and integration", durationMinutes: 55 },
@@ -192,7 +192,7 @@ const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   Flipkart: {
     domain: "e-commerce, payments and logistics",
     tracks: [
-      { name: "Coding OA", round: "Online assessment", focus: ["DSA", "SQL"], emphasis: "fast coding and data-oriented problem solving", durationMinutes: 70 },
+      { name: "Algorithms & Problem Solving & Problem Solving", round: "Online assessment", focus: ["DSA", "SQL"], emphasis: "fast coding and data-oriented problem solving", durationMinutes: 70 },
       { name: "Marketplace Backend", round: "Technical screen", focus: ["APIs", "SQL", "Debugging"], emphasis: "catalog, order and payment-service correctness", durationMinutes: 60 },
       { name: "Scale Systems", round: "System design", focus: ["System Design", "Cloud", "APIs"], emphasis: "peak traffic, caching and resilient services", durationMinutes: 65 },
       { name: "Frontend Commerce", round: "Frontend screen", focus: ["React", "JavaScript"], emphasis: "catalog browsing, state and performance", durationMinutes: 50 },
@@ -201,7 +201,7 @@ const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   Accenture: {
     domain: "technology consulting, enterprise applications and cloud delivery",
     tracks: [
-      { name: "Coding & Logic", round: "Technical screen", focus: ["DSA", "Python"], emphasis: "structured problem solving and implementation", durationMinutes: 55 },
+      { name: "Programming & Logic", round: "Technical screen", focus: ["DSA", "Python"], emphasis: "structured problem solving and implementation", durationMinutes: 55 },
       { name: "SQL & Data", round: "Technical screen", focus: ["SQL", "Testing"], emphasis: "data manipulation and correctness", durationMinutes: 45 },
       { name: "Cloud & Integration", round: "Technical screen", focus: ["Cloud", "APIs"], emphasis: "enterprise integration and deployment concepts", durationMinutes: 50 },
       { name: "Debugging Practice", round: "Technical screen", focus: ["Debugging", "Testing"], emphasis: "issue diagnosis and regression prevention", durationMinutes: 45 },
@@ -219,7 +219,7 @@ const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   "JPMorgan Chase": {
     domain: "financial services, payments and risk systems",
     tracks: [
-      { name: "Coding & DSA", round: "Coding screen", focus: ["DSA", "Python"], emphasis: "correctness, complexity and implementation", durationMinutes: 65 },
+      { name: "Algorithms & Problem Solving & DSA", round: "Coding screen", focus: ["DSA", "Python"], emphasis: "correctness, complexity and implementation", durationMinutes: 65 },
       { name: "Data & SQL", round: "Technical screen", focus: ["SQL", "Testing"], emphasis: "transaction data and query correctness", durationMinutes: 55 },
       { name: "Backend Services", round: "Technical screen", focus: ["APIs", "Debugging", "Testing"], emphasis: "service reliability, validation and diagnostics", durationMinutes: 55 },
       { name: "Financial Systems", round: "System design", focus: ["System Design", "APIs", "Cloud"], emphasis: "resilience, auditability and transaction flows", durationMinutes: 65 },
@@ -228,7 +228,7 @@ const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   "Goldman Sachs": {
     domain: "financial services, markets and analytical platforms",
     tracks: [
-      { name: "Algorithms", round: "Coding screen", focus: ["DSA", "Python"], emphasis: "algorithmic reasoning and implementation efficiency", durationMinutes: 65 },
+      { name: "Algorithms & Problem Solving", round: "Coding screen", focus: ["DSA", "Python"], emphasis: "algorithmic reasoning and implementation efficiency", durationMinutes: 65 },
       { name: "SQL & Data", round: "Technical screen", focus: ["SQL", "Python"], emphasis: "data queries, transformations and analysis", durationMinutes: 55 },
       { name: "Production Debugging", round: "Technical screen", focus: ["Debugging", "Testing", "APIs"], emphasis: "correctness under production constraints", durationMinutes: 55 },
       { name: "Resilient Systems", round: "System design", focus: ["System Design", "Cloud"], emphasis: "fault tolerance, throughput and operational risk", durationMinutes: 65 },
@@ -237,7 +237,7 @@ const COMPANY_PROFILES: Record<string, CompanyProfile> = {
   PayPal: {
     domain: "payments, commerce infrastructure and financial APIs",
     tracks: [
-      { name: "Coding Assessment", round: "Online assessment", focus: ["DSA", "SQL"], emphasis: "fast coding and data reasoning", durationMinutes: 65 },
+      { name: "Algorithms & Problem Solving Assessment", round: "Online assessment", focus: ["DSA", "SQL"], emphasis: "fast coding and data reasoning", durationMinutes: 65 },
       { name: "Payments Backend", round: "Technical screen", focus: ["APIs", "SQL", "Testing"], emphasis: "idempotency, validation and reliable service behavior", durationMinutes: 60 },
       { name: "Payment Systems", round: "System design", focus: ["System Design", "APIs", "Cloud"], emphasis: "resilience, consistency and transaction scale", durationMinutes: 65 },
       { name: "Risk Debugging", round: "Technical screen", focus: ["Debugging", "Testing"], emphasis: "failure analysis and correctness", durationMinutes: 50 },
