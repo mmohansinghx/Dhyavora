@@ -142,10 +142,14 @@ function ResourcePage({ kind, title, kicker, description, fields, hideHeading = 
 
 type Assessment = Row & { data: { durationMinutes: number; description?: string; questions: Array<{ id: string; prompt: string; options: string[] }>; career?: string; company?: string; role?: string; difficulty?: string; topics?: string[]; assessmentType?: string } };
 type Attempt = { attemptId: string; startedAt: string; durationMinutes: number; questions: Assessment["data"]["questions"] };
+type AssessmentPagePayload = {
+  data: Assessment[];
+  meta: { page: number; limit: number; total: number; pages: number; virtualTotal?: number };
+};
 
-const assessmentCareers = ["Software Engineer", "Frontend Developer", "Backend Developer", "Full Stack Developer", "AI Engineer", "ML Engineer", "Data Scientist", "Data Engineer", "DevOps Engineer", "Cloud Engineer", "Cybersecurity Engineer", "QA Engineer"];
-const assessmentCompanies = ["Amazon", "Google", "Microsoft", "Industry-style"];
-const assessmentRoles = ["SDE", "Software Engineer", "Frontend Engineer", "Backend Engineer", "Data Engineer", "ML Engineer", "Cloud Engineer"];
+const assessmentCareers = ["Software Engineer", "Frontend Developer", "Backend Developer", "Full Stack Developer", "Data Engineer", "Data Scientist", "ML Engineer", "Cloud Engineer", "DevOps Engineer", "Cybersecurity Engineer"];
+const assessmentCompanies = ["Amazon", "Google", "Microsoft", "Meta", "Apple", "Netflix", "Adobe", "Salesforce", "Oracle", "IBM", "NVIDIA", "Uber", "Atlassian", "Walmart", "Flipkart", "Accenture", "Deloitte", "JPMorgan Chase", "Goldman Sachs", "PayPal"];
+const assessmentRoles = ["SDE", "Software Engineer", "Frontend Engineer", "Backend Engineer", "Full Stack Engineer", "Data Engineer", "ML Engineer", "Cloud Engineer", "DevOps Engineer", "Platform Engineer"];
 
 function AssessmentPage() {
   const [search, setSearch] = useState("");
@@ -153,27 +157,155 @@ function AssessmentPage() {
   const [company, setCompany] = useState("");
   const [role, setRole] = useState("");
   const [difficulty, setDifficulty] = useState("");
+  const [page, setPage] = useState(1);
   const assessments = useQuery({
-    queryKey: ["assessments", search, career, company, role, difficulty],
-    queryFn: () => api.get<Assessment[]>(`/assessments?search=${encodeURIComponent(search)}&career=${encodeURIComponent(career)}&company=${encodeURIComponent(company)}&role=${encodeURIComponent(role)}&difficulty=${encodeURIComponent(difficulty)}&limit=20`),
+    queryKey: ["assessments", search, career, company, role, difficulty, page],
+    queryFn: () => api.getWithMeta<AssessmentPagePayload["data"]>(`/assessments?search=${encodeURIComponent(search)}&career=${encodeURIComponent(career)}&company=${encodeURIComponent(company)}&role=${encodeURIComponent(role)}&difficulty=${encodeURIComponent(difficulty)}&page=${page}&limit=20`),
     retry: false,
   });
   const history = useQuery({ queryKey: ["assessment-history"], queryFn: () => api.get<Row[]>("/assessment-attempts"), retry: false });
-  const [attempt, setAttempt] = useState<Attempt | null>(null); const [answers, setAnswers] = useState<Record<string, number>>({}); const [marked, setMarked] = useState<Record<string, boolean>>({}); const [seconds, setSeconds] = useState(0); const [result, setResult] = useState<any>(null); const [attemptError, setAttemptError] = useState(""); const [submitting, setSubmitting] = useState(false);
+  const [attempt, setAttempt] = useState<Attempt | null>(null);
+  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [marked, setMarked] = useState<Record<string, boolean>>({});
+  const [seconds, setSeconds] = useState(0);
+  const [result, setResult] = useState<any>(null);
+  const [attemptError, setAttemptError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const qc = useQueryClient();
-  const start = useMutation({ mutationFn: (id: string) => api.post<Attempt>(`/assessments/${id}/attempts`), onSuccess: (next) => { setAttempt(next); setAnswers({}); setMarked({}); setSeconds(next.durationMinutes * 60); setResult(null); setAttemptError(""); } });
-  useEffect(() => { if (!attempt || result) return; const timer = window.setInterval(() => { const left = Math.max(0, Math.ceil((Date.parse(attempt.startedAt) + attempt.durationMinutes * 60_000 - Date.now()) / 1000)); setSeconds(left); if (!left) { window.clearInterval(timer); void submit(); } }, 1000); return () => window.clearInterval(timer); }, [attempt?.attemptId, result]);
-  async function answer(index: number, selectedOption?: number, markForReview = Boolean(marked[String(index)])) { if (!attempt) return; setAnswers((prev) => selectedOption === undefined ? prev : { ...prev, [String(index)]: selectedOption }); setMarked((prev) => ({ ...prev, [String(index)]: markForReview })); try { await api.put(`/assessment-attempts/${attempt.attemptId}/answers/${index}`, { ...(selectedOption === undefined ? {} : { selectedOption }), markForReview }); } catch (error) { setAttemptError(error instanceof Error ? error.message : "Answer could not be saved."); } }
-  async function submit() { if (!attempt || submitting) return; setSubmitting(true); setAttemptError(""); try { const next = await api.post<any>(`/assessment-attempts/${attempt.attemptId}/submit`); setResult(next); setAttempt(null); void qc.invalidateQueries({ queryKey: ["assessment-history"] }); } catch (error) { setAttemptError(error instanceof Error ? error.message : "Assessment could not be submitted."); } finally { setSubmitting(false); } }
+  const pageData = assessments.data;
+  const items = pageData?.data ?? [];
+  const total = Number(pageData?.meta?.total ?? 0);
+  const pages = Number(pageData?.meta?.pages ?? 1);
+  const virtualTotal = Number(pageData?.meta?.virtualTotal ?? 100000);
+
+  function resetPage(next: () => void) {
+    setPage(1);
+    next();
+  }
+
+  const start = useMutation({
+    mutationFn: (id: string) => api.post<Attempt>(`/assessments/${id}/attempts`),
+    onSuccess: (next) => {
+      setAttempt(next);
+      setAnswers({});
+      setMarked({});
+      setSeconds(next.durationMinutes * 60);
+      setResult(null);
+      setAttemptError("");
+    },
+  });
+
+  useEffect(() => {
+    if (!attempt || result) return;
+    const timer = window.setInterval(() => {
+      const left = Math.max(0, Math.ceil((Date.parse(attempt.startedAt) + attempt.durationMinutes * 60_000 - Date.now()) / 1000));
+      setSeconds(left);
+      if (!left) { window.clearInterval(timer); void submit(); }
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [attempt?.attemptId, result]);
+
+  async function answer(index: number, selectedOption?: number, markForReview = Boolean(marked[String(index)])) {
+    if (!attempt) return;
+    setAnswers((prev) => selectedOption === undefined ? prev : { ...prev, [String(index)]: selectedOption });
+    setMarked((prev) => ({ ...prev, [String(index)]: markForReview }));
+    try {
+      await api.put(`/assessment-attempts/${attempt.attemptId}/answers/${index}`, { ...(selectedOption === undefined ? {} : { selectedOption }), markForReview });
+    } catch (error) {
+      setAttemptError(error instanceof Error ? error.message : "Answer could not be saved.");
+    }
+  }
+
+  async function submit() {
+    if (!attempt || submitting) return;
+    setSubmitting(true);
+    setAttemptError("");
+    try {
+      const next = await api.post<any>(`/assessment-attempts/${attempt.attemptId}/submit`);
+      setResult(next);
+      setAttempt(null);
+      void qc.invalidateQueries({ queryKey: ["assessment-history"] });
+    } catch (error) {
+      setAttemptError(error instanceof Error ? error.message : "Assessment could not be submitted.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   const timeLabel = `${Math.floor(seconds / 60).toString().padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`;
-  if (attempt) return <><PageHeading kicker="ASSESSMENT IN PROGRESS" title={`${attempt.questions.length} questions`} description="Your timer and scoring are controlled by the server." /><section className="surface-card active-assessment"><div className="assessment-live-head"><div><div className="eyebrow">SERVER-TIMED · SERVER-SCORED</div><h2>Stay focused.</h2></div><div className={`timer-chip ${seconds < 60 ? "urgent" : ""}`}><Activity size={15} /> {timeLabel}</div></div><div className="question-list">{attempt.questions.map((question, index) => <article className="question-card" key={question.id}><div className="question-meta"><span>QUESTION {String(index + 1).padStart(2, "0")}</span><button className={`review-button ${marked[String(index)] ? "marked" : ""}`} onClick={() => void answer(index, answers[String(index)], !marked[String(index)])}><CheckCircle2 size={14} /> {marked[String(index)] ? "Marked" : "Mark for review"}</button></div><h3>{question.prompt}</h3><div className="answer-options">{question.options.map((option, optionIndex) => <label key={`${question.id}-${optionIndex}`} className={`answer-option ${answers[String(index)] === optionIndex ? "chosen" : ""}`}><input type="radio" name={`question-${index}`} checked={answers[String(index)] === optionIndex} onChange={() => void answer(index, optionIndex)} /><span className="option-letter">{String.fromCharCode(65 + optionIndex)}</span><span>{option}</span></label>)}</div></article>)}</div><div className="form-footer"><span className="saved-note">{Object.keys(answers).length} answered · {Object.values(marked).filter(Boolean).length} for review</span><button className="button button-primary" disabled={submitting} onClick={() => void submit()}>{submitting ? "Submitting…" : "Submit assessment"} <ArrowRight size={15} /></button></div>{attemptError && <QueryError error={new Error(attemptError)} />}</section></>;
-  return <><PageHeading kicker="ASSESSMENT HUB" title="Prepare for the work you want." description="Search by company, career, role, skill or topic. Dhyavora simulations are original preparation assessments, not leaked company tests." />
-    {result && <section className="surface-card result-card"><div className="eyebrow">ASSESSMENT COMPLETE</div><div className="result-score">{result.score}<small>points</small></div><div className="result-stats"><span><strong>{result.correct}</strong> correct</span><span><strong>{result.incorrect}</strong> incorrect</span><span><strong>{result.skipped}</strong> skipped</span></div><p>{result.timedOut ? "Time ran out; your answers were submitted by the server." : "Your result is saved in your assessment history."}</p><button className="button button-soft" onClick={() => setResult(null)}>Back to assessments</button></section>}
-    {!result && <><section className="assessment-hub-search surface-card"><div className="eyebrow">WHAT ARE YOU PREPARING FOR?</div><div className="assessment-search"><Search size={18} /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search company, career, skill or topic..." /></div><div className="assessment-filters"><select value={career} onChange={(e) => setCareer(e.target.value)}><option value="">Career</option>{assessmentCareers.map((item) => <option key={item}>{item}</option>)}</select><select value={company} onChange={(e) => setCompany(e.target.value)}><option value="">Company</option>{assessmentCompanies.map((item) => <option key={item}>{item}</option>)}</select><select value={role} onChange={(e) => setRole(e.target.value)}><option value="">Role</option>{assessmentRoles.map((item) => <option key={item}>{item}</option>)}</select><select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}><option value="">Difficulty</option><option>Easy</option><option>Medium</option><option>Hard</option><option>Medium → Hard</option></select></div></section>
-      <section className="assessment-banner"><div className="assessment-banner-icon"><ClipboardCheck size={21} /></div><div><div className="eyebrow">ORIGINAL DHYAVORA SIMULATIONS</div><h2>Practice with purpose.</h2><p>Choose a company, career and role to find a focused preparation simulation.</p></div></section>
-      {assessments.isLoading ? <LoadingLine /> : assessments.isError ? <QueryError error={assessments.error} /> : assessments.data?.length ? <div className="record-grid">{assessments.data.map((item) => <article className="record-card assessment-card" key={item._id}><div className="record-card-top"><span className="record-icon coral-text"><ClipboardCheck size={16} /></span><span className="duration-pill">{item.data.durationMinutes} min</span></div><h3>{item.title}</h3><p>{item.data.description ?? "Focused preparation for your target role."}</p><div className="record-meta">{item.data.company && <span>{item.data.company}</span>}{item.data.role && <span>{item.data.role}</span>}{item.data.difficulty && <span>{item.data.difficulty}</span>}<span>{item.data.questions?.length ?? 0} questions</span></div>{item.data.topics?.length ? <div className="skill-pills">{item.data.topics.slice(0, 5).map((topic) => <span className="skill-pill" key={topic}>{topic}</span>)}</div> : null}<button className="button button-soft button-small" onClick={() => start.mutate(item._id)} disabled={start.isPending}>{start.isPending ? "Starting…" : "Start assessment"}<ArrowRight size={14} /></button></article>)}</div> : <section className="surface-card"><EmptyState icon={ClipboardCheck} title="No matching assessments" text="Try a broader company, career, role or topic search." /></section>}
-      <section className="surface-card history-card"><div className="card-heading"><div><div className="eyebrow">YOUR PRACTICE</div><h2>Assessment history</h2></div></div>{history.isLoading ? <LoadingLine /> : history.data?.length ? history.data.map((row) => <div className="history-row" key={row._id}><span className="history-check"><CheckCircle2 size={16} /></span><strong>{row.title}</strong><small>{new Date(row.updatedAt ?? "").toLocaleDateString()}</small><span className="history-score">{row.data.result?.score ?? 0} pts</span></div>) : <p className="quiet-empty">Your completed assessments will be saved here.</p>}</section></>}</>;
+
+  if (attempt) return <>
+    <PageHeading kicker="ASSESSMENT IN PROGRESS" title={`${attempt.questions.length} questions`} description="Your timer and scoring are controlled by the server." />
+    <motion.section className="surface-card active-assessment" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+      <div className="assessment-live-head">
+        <div><div className="eyebrow">SERVER-TIMED · SERVER-SCORED</div><h2>Stay focused.</h2></div>
+        <motion.div className={`timer-chip ${seconds < 60 ? "urgent" : ""}`} animate={seconds < 60 ? { scale: [1, 1.04, 1] } : undefined} transition={seconds < 60 ? { duration: .8, repeat: Infinity } : undefined}><Activity size={15} /> {timeLabel}</motion.div>
+      </div>
+      <div className="question-list">{attempt.questions.map((question, index) =>
+        <motion.article className="question-card" key={question.id} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * .035 }}>
+          <div className="question-meta"><span>QUESTION {String(index + 1).padStart(2, "0")}</span><button className={`review-button ${marked[String(index)] ? "marked" : ""}`} onClick={() => void answer(index, answers[String(index)], !marked[String(index)])}><CheckCircle2 size={14} /> {marked[String(index)] ? "Marked" : "Mark for review"}</button></div>
+          <h3>{question.prompt}</h3>
+          <div className="answer-options">{question.options.map((option, optionIndex) => <motion.label whileHover={{ y: -1 }} key={`${question.id}-${optionIndex}`} className={`answer-option ${answers[String(index)] === optionIndex ? "chosen" : ""}`}><input type="radio" name={`question-${index}`} checked={answers[String(index)] === optionIndex} onChange={() => void answer(index, optionIndex)} /><span className="option-letter">{String.fromCharCode(65 + optionIndex)}</span><span>{option}</span></motion.label>)}</div>
+        </motion.article>
+      )}</div>
+      <div className="form-footer"><span className="saved-note">{Object.keys(answers).length} answered · {Object.values(marked).filter(Boolean).length} for review</span><button className="button button-primary" disabled={submitting} onClick={() => void submit()}>{submitting ? "Submitting…" : "Submit assessment"} <ArrowRight size={15} /></button></div>
+      {attemptError && <QueryError error={new Error(attemptError)} />}
+    </motion.section>
+  </>;
+
+  return <>
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+      <PageHeading kicker="ASSESSMENT HUB" title="Prepare for the work you want." description="Company-oriented Dhyavora simulations built for role, career, topic and difficulty practice—not leaked company tests." />
+    </motion.div>
+
+    {result && <motion.section className="surface-card result-card" initial={{ opacity: 0, scale: .98 }} animate={{ opacity: 1, scale: 1 }}>
+      <div className="eyebrow">ASSESSMENT COMPLETE</div><div className="result-score">{result.score}<small>points</small></div>
+      <div className="result-stats"><span><strong>{result.correct}</strong> correct</span><span><strong>{result.incorrect}</strong> incorrect</span><span><strong>{result.skipped}</strong> skipped</span></div>
+      <p>{result.timedOut ? "Time ran out; your answers were submitted by the server." : "Your result is saved in your assessment history."}</p>
+      <button className="button button-soft" onClick={() => setResult(null)}>Back to assessments</button>
+    </motion.section>}
+
+    {!result && <>
+      <motion.section className="assessment-hub-search surface-card" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .06 }}>
+        <div className="assessment-search-head"><div><div className="eyebrow">COMPANY-ORIENTED PREPARATION</div><h2>{total ? total.toLocaleString("en-IN") : "1,00,000+"} simulations in the library</h2><p>Every catalog item is an original Dhyavora simulation tagged to a company, career, role, topic and level.</p></div><span className="assessment-count-badge">≈ {virtualTotal.toLocaleString("en-IN")}</span></div>
+        <div className="assessment-search"><Search size={18} /><input value={search} onChange={(e) => resetPage(() => setSearch(e.target.value))} placeholder="Search company, career, skill or topic..." /></div>
+        <div className="assessment-filters">
+          <select value={career} onChange={(e) => resetPage(() => setCareer(e.target.value))}><option value="">Career</option>{assessmentCareers.map((item) => <option key={item}>{item}</option>)}</select>
+          <select value={company} onChange={(e) => resetPage(() => setCompany(e.target.value))}><option value="">Company</option>{assessmentCompanies.map((item) => <option key={item}>{item}</option>)}</select>
+          <select value={role} onChange={(e) => resetPage(() => setRole(e.target.value))}><option value="">Role</option>{assessmentRoles.map((item) => <option key={item}>{item}</option>)}</select>
+          <select value={difficulty} onChange={(e) => resetPage(() => setDifficulty(e.target.value))}><option value="">Difficulty</option><option>Easy</option><option>Medium</option><option>Hard</option><option>Medium → Hard</option></select>
+        </div>
+        {(search || career || company || role || difficulty) && <button className="clear-filters" onClick={() => { setSearch(""); setCareer(""); setCompany(""); setRole(""); setDifficulty(""); setPage(1); }}>Clear filters</button>}
+      </motion.section>
+
+      <motion.section className="assessment-banner advanced-assessment-banner" initial={{ opacity: 0, scale: .985 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: .11 }}>
+        <motion.div className="assessment-banner-icon" animate={{ rotate: [0, 3, -3, 0] }} transition={{ duration: 4, repeat: Infinity }}><ClipboardCheck size={21} /></motion.div>
+        <div><div className="eyebrow">ORIGINAL DHYAVORA SIMULATIONS</div><h2>Advanced practice, organized by company.</h2><p>Choose a company and role lane, then progressively move from Easy → Medium → Hard → Medium → Hard simulations.</p></div>
+      </motion.section>
+
+      {assessments.isLoading ? <LoadingLine /> : assessments.isError ? <QueryError error={assessments.error} /> : items.length ? <AnimatePresence mode="popLayout">
+        <motion.div key={`${page}-${career}-${company}-${role}-${difficulty}-${search}`} className="record-grid" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          {items.map((item, index) => <motion.article key={item._id} className="record-card assessment-card" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} whileHover={{ y: -4 }} transition={{ duration: .28, delay: index * .025 }}>
+            <div className="record-card-top"><span className="record-icon coral-text"><ClipboardCheck size={16} /></span><span className="duration-pill">{item.data.durationMinutes} min</span></div>
+            <h3>{item.title}</h3>
+            <p>{item.data.description ?? "Focused preparation for your target role."}</p>
+            <div className="record-meta">{item.data.company && <span>{item.data.company}</span>}{item.data.career && <span>{item.data.career}</span>}{item.data.role && <span>{item.data.role}</span>}{item.data.difficulty && <span>{item.data.difficulty}</span>}</div>
+            {item.data.topics?.length ? <div className="skill-pills">{item.data.topics.slice(0, 5).map((topic) => <span className="skill-pill" key={topic}>{topic}</span>)}</div> : null}
+            <button className="button button-soft button-small" onClick={() => start.mutate(item._id)} disabled={start.isPending}>{start.isPending ? "Starting…" : "Start simulation"}<ArrowRight size={14} /></button>
+          </motion.article>)}
+        </motion.div>
+      </AnimatePresence> : <section className="surface-card"><EmptyState icon={ClipboardCheck} title="No matching assessments" text="Try a broader company, career, role or topic search." /></section>}
+
+      {pages > 1 && <div className="assessment-pagination">
+        <span>Showing {(page - 1) * 20 + 1}–{Math.min(page * 20, total)} of {total.toLocaleString("en-IN")}</span>
+        <div><button className="button button-soft button-small" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>Previous</button><span className="assessment-page-number">Page {page} / {pages.toLocaleString("en-IN")}</span><button className="button button-soft button-small" disabled={page >= pages} onClick={() => setPage((current) => current + 1)}>Next</button></div>
+      </div>}
+
+      <section className="surface-card history-card"><div className="card-heading"><div><div className="eyebrow">YOUR PRACTICE</div><h2>Assessment history</h2></div></div>{history.isLoading ? <LoadingLine /> : history.data?.length ? history.data.map((row) => <motion.div className="history-row" key={row._id} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}><span className="history-check"><CheckCircle2 size={16} /></span><strong>{row.title}</strong><small>{new Date(row.updatedAt ?? "").toLocaleDateString()}</small><span className="history-score">{row.data.result?.score ?? 0} pts</span></motion.div>) : <p className="quiet-empty">Your completed assessments will be saved here.</p>}</section>
+    </>}
+  </>;
 }
+
 function ResumePage() {
   const resumes = useQuery({ queryKey: ["resumes"], queryFn: () => api.get<Row[]>("/resumes"), retry: false }); const qc = useQueryClient(); const [file, setFile] = useState<File | null>(null); const [preview, setPreview] = useState<{ id: string; title: string; extractedText: string; storagePath: string } | null>(null); const [skills, setSkills] = useState("");
   const upload = useMutation({ mutationFn: async () => { if (!file) throw new Error("Choose a PDF or text file first."); const form = new FormData(); form.append("file", file); return api.upload<{ id: string; title: string; extractedText: string; storagePath: string }>("/resumes", form); }, onSuccess: (result) => { setPreview(result); void qc.invalidateQueries({ queryKey: ["resumes"] }); } });
