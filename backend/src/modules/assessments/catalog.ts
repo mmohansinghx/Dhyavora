@@ -13,6 +13,10 @@ export type VirtualAssessment = {
     difficulty: "Easy" | "Medium" | "Hard" | "Medium → Hard";
     topics: string[];
     assessmentType: "MCQ";
+    assessmentTrack: string;
+    assessmentRound: string;
+    companyDomain: string;
+    blueprint: { focus: Array<{ topic: string; weight: number }>; emphasis: string };
     active: true;
     virtual: true;
     questions: Array<{ id: string; prompt: string; options: string[]; correctOption: number; points: number }>;
@@ -43,10 +47,12 @@ const TOPICS = [
   "APIs", "Cloud", "Testing", "Debugging",
 ] as const;
 
+type AssessmentTopic = (typeof TOPICS)[number];
+
 type AssessmentTrack = {
   name: string;
   round: string;
-  focus: readonly string[];
+  focus: readonly AssessmentTopic[];
   emphasis: string;
   durationMinutes: number;
 };
@@ -355,14 +361,12 @@ export function isVirtualAssessmentId(id: string) {
 function valuesForIndex(index: number) {
   const company = COMPANIES[index % COMPANIES.length]!;
   const profile = COMPANY_PROFILES[company]!;
-  const companyIndex = index % COMPANIES.length;
   const career = CAREERS[Math.floor(index / COMPANIES.length) % CAREERS.length]!;
   const role = ROLES[Math.floor(index / (COMPANIES.length * CAREERS.length)) % ROLES.length]!;
   const difficulty = DIFFICULTIES[Math.floor(index / (COMPANIES.length * CAREERS.length * ROLES.length)) % DIFFICULTIES.length]!;
   const trackPool = profile.tracks;
   const track = trackPool[Math.floor(index / (COMPANIES.length * CAREERS.length * ROLES.length * DIFFICULTIES.length)) % trackPool.length]!;
   const variant = Math.floor(index / (COMPANIES.length * CAREERS.length * ROLES.length * DIFFICULTIES.length * trackPool.length)) + 1;
-  void companyIndex;
   return { company, profile, career, role, difficulty, track, variant };
 }
 
