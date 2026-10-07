@@ -230,7 +230,7 @@ function OverviewPage() {
       await qc.invalidateQueries({ queryKey: ["skill-gap"] });
     },
   });
-  const refresh = () => void qc.invalidateQueries({ queryKey: ["career-intelligence"] });
+  const _refresh = () => void qc.invalidateQueries({ queryKey: ["career-intelligence"] });
 
   if (data.profileQuery.isLoading || data.careers.isLoading || (data.selectedId && data.gap.isLoading)) return <LoadingState />;
   if (data.profileQuery.isError) return <ErrorState error={data.profileQuery.error} />;
