@@ -44,12 +44,7 @@ const ROLES = [
 
 const DIFFICULTIES = ["Easy", "Medium", "Hard", "Medium → Hard"] as const;
 
-const TOPICS = [
-  "DSA", "SQL", "JavaScript", "React", "Python", "System Design",
-  "APIs", "Cloud", "Testing", "Debugging",
-] as const;
-
-type AssessmentTopic = (typeof TOPICS)[number];
+type AssessmentTopic = "DSA" | "SQL" | "JavaScript" | "React" | "Python" | "System Design" | "APIs" | "Cloud" | "Testing" | "Debugging";
 
 type AssessmentTrack = {
   name: string;
@@ -326,12 +321,12 @@ function generatedQuestion(
     prompt = sqlTemplates[questionIndex % sqlTemplates.length]!;
     options = ["Use the SQL construct that preserves row semantics and applies the filter at the correct stage", "Move every condition into ORDER BY", "Use CROSS JOIN for every relationship", "Replace SQL with a client-side loop"];
     correctOption = 0;
-    if (questionIndex % 8 === 2) options = ["HAVING", "WHERE", "ORDER BY", "LIMIT"], correctOption = 0;
-    if (questionIndex % 8 === 3) options = ["Composite index on the filtered columns in predicate order", "Drop all indexes", "Full scan is always faster", "Create a random single-column index"], correctOption = 0;
-    if (questionIndex % 8 === 4) options = ["Window function", "GROUP BY only", "DISTINCT only", "UNION ALL"], correctOption = 0;
-    if (questionIndex % 8 === 5) options = ["LEFT JOIN", "INNER JOIN", "CROSS JOIN", "FULL DELETE"], correctOption = 0;
-    if (questionIndex % 8 === 6) options = ["Read committed", "Read uncommitted", "No isolation", "Read only"], correctOption = 0;
-    if (questionIndex % 8 === 7) options = ["ROW_NUMBER() over a partition, then keep one row", "CROSS JOIN and delete randomly", "ORDER BY without partitioning", "COUNT() without a key"], correctOption = 0;
+    if (questionIndex % 8 === 2) { options = ["HAVING", "WHERE", "ORDER BY", "LIMIT"]; correctOption = 0; }
+    if (questionIndex % 8 === 3) { options = ["Composite index on the filtered columns in predicate order", "Drop all indexes", "Full scan is always faster", "Create a random single-column index"]; correctOption = 0; }
+    if (questionIndex % 8 === 4) { options = ["Window function", "GROUP BY only", "DISTINCT only", "UNION ALL"]; correctOption = 0; }
+    if (questionIndex % 8 === 5) { options = ["LEFT JOIN", "INNER JOIN", "CROSS JOIN", "FULL DELETE"]; correctOption = 0; }
+    if (questionIndex % 8 === 6) { options = ["Read committed", "Read uncommitted", "No isolation", "Read only"]; correctOption = 0; }
+    if (questionIndex % 8 === 7) { options = ["ROW_NUMBER() over a partition, then keep one row", "CROSS JOIN and delete randomly", "ORDER BY without partitioning", "COUNT() without a key"]; correctOption = 0; }
   } else if (type === "Debugging") {
     const debugTemplates = [
       `After a deployment, ${service} requests intermittently fail only under parallel load. What should you investigate first?`,
@@ -346,11 +341,11 @@ function generatedQuestion(
     prompt = debugTemplates[questionIndex % debugTemplates.length]!;
     options = ["Capture a minimal reproduction, relevant logs/state, and isolate the failing dependency", "Disable all tests", "Retry endlessly", "Delete the feature before observing it"];
     correctOption = 0;
-    if (questionIndex % 8 === 3) options = ["Missing await / incorrect async control flow", "CSS specificity", "Database normalization", "Hash collision"], correctOption = 0;
-    if (questionIndex % 8 === 4) options = ["Backoff + bounded retries / circuit breaking", "Infinite retries", "Remove timeouts", "Ignore downstream health"], correctOption = 0;
-    if (questionIndex % 8 === 5) options = ["Off-by-one / boundary condition", "DNS caching", "SQL normalization", "Font loading"], correctOption = 0;
-    if (questionIndex % 8 === 6) options = ["Heap/profile data and request-lifecycle evidence", "Only a screenshot", "CSS source map only", "Browser history"], correctOption = 0;
-    if (questionIndex % 8 === 7) options = ["Fix the root cause", "Hide the error message", "Remove observability", "Add random delays"], correctOption = 0;
+    if (questionIndex % 8 === 3) { options = ["Missing await / incorrect async control flow", "CSS specificity", "Database normalization", "Hash collision"]; correctOption = 0; }
+    if (questionIndex % 8 === 4) { options = ["Backoff + bounded retries / circuit breaking", "Infinite retries", "Remove timeouts", "Ignore downstream health"]; correctOption = 0; }
+    if (questionIndex % 8 === 5) { options = ["Off-by-one / boundary condition", "DNS caching", "SQL normalization", "Font loading"]; correctOption = 0; }
+    if (questionIndex % 8 === 6) { options = ["Heap/profile data and request-lifecycle evidence", "Only a screenshot", "CSS source map only", "Browser history"]; correctOption = 0; }
+    if (questionIndex % 8 === 7) { options = ["Fix the root cause", "Hide the error message", "Remove observability", "Add random delays"]; correctOption = 0; }
   }
 
   const level = difficulty === "Hard" || difficulty === "Medium → Hard" ? 2 : 1;
