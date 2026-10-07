@@ -3,9 +3,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, NavLink, useLocation, useParams } from "react-router-dom";
 import {
-  ArrowRight, BarChart3, BookOpen, BriefcaseBusiness, Check, CheckCircle2, ChevronDown,
-  Clock3, Code2, Compass, ExternalLink, FileText, Flag, Github, Layers3, Map,
-  RefreshCw, Search, Sparkles, Target, TrendingUp, Users, Zap,
+  ArrowRight, BarChart3, BriefcaseBusiness, Check, CheckCircle2, ChevronDown,
+  Clock3, Code2, Compass, Flag, Layers3, Map,
+  RefreshCw, Search, Sparkles, Target, TrendingUp, Zap,
 } from "lucide-react";
 import {
   type CareerMatch, type ReadinessSummary, type Skill, type SkillGapItem,
@@ -160,10 +160,6 @@ function currentWeekCount(items: Array<{ createdAt?: string; updatedAt?: string 
     return Number.isFinite(date.getTime()) && date >= start;
   }).length;
 }
-function profileSkillMap(profile?: Row<ProfileData>) {
-  return new Map((profile?.data.skills ?? []).map((skill) => [skill.name.trim().toLowerCase(), skill]));
-}
-
 function CareerSubnav() {
   const items = [
     ["/career", "Overview"],
