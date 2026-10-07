@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { Activity, ArrowRight, ArrowUpRight, Bell, BriefcaseBusiness, Check, CheckCircle2, ChevronDown, CircleHelp, ClipboardCheck, Clock, Code2, Compass, FileText, GraduationCap, LayoutDashboard, LogOut, Menu, MessageCircle, Plus, Search, Send, Settings, ShieldAlert, Sparkles, Target, TrendingUp, Users, X } from "lucide-react";
+import { Activity, ArrowRight, ArrowUpRight, Bell, BriefcaseBusiness, Check, CheckCircle2, ChevronDown, CircleHelp, ClipboardCheck, Code2, Compass, FileText, GraduationCap, LayoutDashboard, LogOut, Menu, MessageCircle, Plus, Search, Send, Settings, ShieldAlert, Sparkles, Target, Users, X } from "lucide-react";
 import { type Skill, type SkillGapItem } from "@dhyavora/contracts";
 import { api } from "./api";
 import { useAuth } from "./auth";
