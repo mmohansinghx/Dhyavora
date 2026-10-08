@@ -19,7 +19,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signUp: async (email, password) => { if (!auth) throw new Error("Account creation is temporarily unavailable. Please try again shortly."); const credential = await createUserWithEmailAndPassword(auth, email, password); await sendEmailVerification(credential.user); },
     resetPassword: async (email) => { if (!auth) throw new Error("Password recovery is temporarily unavailable. Please try again shortly."); await sendPasswordResetEmail(auth, email); },
     resendVerification: async () => { if (!auth || !auth.currentUser) throw new Error("Verification email could not be sent. Please sign in again."); await sendEmailVerification(auth.currentUser); },
-    refreshUser: async () => { if (auth.currentUser) await auth.currentUser.reload(); },
+    refreshUser: async () => { if (auth.currentUser) { await auth.currentUser.reload(); setUser(auth.currentUser); } },
     logOut: async () => { if (auth) await signOut(auth); },
   }), [user, loading]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
