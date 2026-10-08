@@ -15,8 +15,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => auth ? onAuthStateChanged(auth, (nextUser) => { setUser(nextUser); setLoading(false); }) : undefined, []);
   const value = useMemo<AuthValue>(() => ({
     user, loading, configured: firebaseWebConfigured,
-    signIn: async (email, password) => { if (!auth) throw new Error("Firebase Auth is not configured."); await signInWithEmailAndPassword(auth, email, password); },
-    signUp: async (email, password) => { if (!auth) throw new Error("Firebase Auth is not configured."); await createUserWithEmailAndPassword(auth, email, password); },
+    signIn: async (email, password) => { if (!auth) throw new Error("Sign-in is temporarily unavailable. Please try again shortly."); await signInWithEmailAndPassword(auth, email, password); },
+    signUp: async (email, password) => { if (!auth) throw new Error("Account creation is temporarily unavailable. Please try again shortly."); await createUserWithEmailAndPassword(auth, email, password); },
     logOut: async () => { if (auth) await signOut(auth); },
   }), [user, loading]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
