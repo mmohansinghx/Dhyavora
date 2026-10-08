@@ -36,34 +36,140 @@ export function App() {
   if (loading) return <div className="boot-screen"><span className="brand-glyph">✦</span><span>Preparing your workspace</span></div>;
   if (!configured) return <LoginScreen setupRequired />;
   if (!user) return <LoginScreen />;
+  if (!user.emailVerified) return <VerifyEmailScreen />;
   return <Workspace />;
 }
 
+function authMessage(reason: unknown) {
+  const code = reason instanceof Error ? reason.message : String(reason ?? "");
+  if (/auth\/invalid-credential|auth\/invalid-login-credentials/i.test(code)) return "Email or password is incorrect.";
+  if (/auth\/user-not-found/i.test(code)) return "We couldn’t find an account with that email.";
+  if (/auth\/wrong-password/i.test(code)) return "Email or password is incorrect.";
+  if (/auth\/email-already-in-use/i.test(code)) return "An account already exists with that email. Try signing in.";
+  if (/auth\/weak-password/i.test(code)) return "Choose a stronger password with at least 6 characters.";
+  if (/auth\/invalid-email/i.test(code)) return "Enter a valid email address.";
+  if (/auth\/too-many-requests/i.test(code)) return "Too many attempts. Please wait a little and try again.";
+  if (/auth\/network-request-failed/i.test(code)) return "We couldn’t reach the service. Check your connection and try again.";
+  if (/Firebase|credential|configuration|provider/i.test(code)) return "Sign-in is temporarily unavailable. Please try again shortly.";
+  return code || "Authentication could not complete. Please try again.";
+}
+
 function LoginScreen({ setupRequired = false }: { setupRequired?: boolean }) {
-  const { signIn, signUp } = useAuth();
-  const [mode, setMode] = useState<"login" | "signup">("login");
-  const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
+  const { signIn, signUp, resetPassword } = useAuth();
+  const [mode, setMode] = useState<"login" | "signup" | "reset">("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [busy, setBusy] = useState(false);
+
   async function submit(event: FormEvent) {
-    event.preventDefault(); setError(""); setBusy(true);
-    try { await (mode === "login" ? signIn(email, password) : signUp(email, password)); }
-    catch (reason) { setError(reason instanceof Error ? reason.message : "Authentication could not complete."); }
-    finally { setBusy(false); }
+    event.preventDefault();
+    setError("");
+    setSuccess("");
+    setBusy(true);
+    try {
+      if (mode === "reset") {
+        await resetPassword(email);
+        setSuccess("Password reset instructions are on their way. Check your inbox.");
+        setMode("login");
+      } else {
+        await (mode === "login" ? signIn(email, password) : signUp(email, password));
+        if (mode === "signup") setSuccess("Account created. Check your email to verify your address before continuing.");
+      }
+    } catch (reason) {
+      setError(authMessage(reason));
+    } finally {
+      setBusy(false);
+    }
   }
+
+  const isReset = mode === "reset";
   return <main className="auth-page">
     <section className="auth-story">
       <Brand compact={false} />
-      <div className="story-copy"><div className="eyebrow"><span className="spark-dot" /> YOUR NEXT CHAPTER, IN FOCUS</div><h1>Make your ambition<br />feel <span>actionable.</span></h1><p>A calmer, clearer way to build the skills, proof and confidence for the work you want.</p><div className="story-foot"><div className="orbit-mark"><span>✦</span></div><span>One thoughtful step<br />at a time.</span></div></div>
+      <div className="story-copy">
+        <div className="eyebrow"><span className="spark-dot" /> YOUR NEXT CHAPTER, IN FOCUS</div>
+        <h1>Make your ambition<br />feel <span>actionable.</span></h1>
+        <p>A calmer, clearer way to build the skills, proof and confidence for the work you want.</p>
+        <div className="story-points">
+          <div><strong>Career map</strong><span>See the skills and milestones behind your target role.</span></div>
+          <div><strong>Practice that matters</strong><span>Assess yourself with role, skill and difficulty-aware simulations.</span></div>
+          <div><strong>Evidence over hype</strong><span>Turn projects, learning and progress into a clearer career story.</span></div>
+        </div>
+        <div className="story-foot"><div className="orbit-mark"><span>✦</span></div><span>One thoughtful step<br />at a time.</span></div>
+      </div>
+      <div className="auth-orb orb-one" /><div className="auth-orb orb-two" />
+    </section>
+
+    <section className="auth-panel"><div className="auth-form-wrap">
+      <div className="mobile-brand"><Brand /></div>
+      <div className="eyebrow muted">YOUR CAREER WORKSPACE</div>
+      <h2>{setupRequired ? "Sign-in is unavailable." : isReset ? "Reset your password." : mode === "login" ? "Welcome back." : "Start with a clear path."}</h2>
+      <p className="muted-copy">{setupRequired ? "Sign-in is temporarily unavailable. Please try again shortly." : isReset ? "Enter your email and we’ll send password reset instructions." : mode === "login" ? "Sign in to pick up where your growth left off." : "Create your Dhyavora account and begin with your goals."}</p>
+
+      {setupRequired ? <div className="setup-note"><ShieldAlert size={18} /><div><strong>Come back soon</strong><span>Sign-in is not available right now. Please try again shortly.</span></div></div> : <>
+        <form onSubmit={submit} className="stack-form">
+          <label>Email address<input autoComplete="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required /></label>
+          {!isReset && <label>Password<input autoComplete={mode === "login" ? "current-password" : "new-password"} type="password" minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" required /></label>}
+          {error && <div className="inline-error">{error}</div>}
+          {success && <div className="success-banner">{success}</div>}
+          <button className="button button-primary wide" disabled={busy}>{busy ? "Please wait…" : isReset ? "Send reset instructions" : mode === "login" ? "Sign in" : "Create account"}<ArrowRight size={16} /></button>
+        </form>
+
+        <div className="auth-links">
+          {mode === "login" && <button onClick={() => { setMode("reset"); setError(""); setSuccess(""); }}>Forgot password?</button>}
+          {mode === "reset" && <button onClick={() => { setMode("login"); setError(""); setSuccess(""); }}>Back to sign in</button>}
+          {mode !== "reset" && <button onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); setSuccess(""); }}>{mode === "login" ? "Create account" : "Already have an account? Sign in"}</button>}
+        </div>
+      </>}
+
+      <p className="privacy-note"><ShieldAlert size={13} /> Your career data stays yours. We verify your sign-in securely and keep your workspace private.</p>
+    </div></section>
+  </main>;
+}
+
+function VerifyEmailScreen() {
+  const { user, resendVerification, refreshUser, logOut } = useAuth();
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function resend() {
+    setBusy(true); setError(""); setMessage("");
+    try {
+      await resendVerification();
+      setMessage("Verification email sent. Check your inbox, then return here.");
+    } catch (reason) {
+      setError(authMessage(reason));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function checkVerification() {
+    setBusy(true); setError(""); setMessage("");
+    try {
+      await refreshUser();
+      if (user?.emailVerified === false) setMessage("Your email is still waiting for verification. Open the latest verification email and try again.");
+    } catch (reason) {
+      setError(authMessage(reason));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return <main className="auth-page">
+    <section className="auth-story">
+      <Brand compact={false} />
+      <div className="story-copy"><div className="eyebrow"><span className="spark-dot" /> ONE LAST STEP</div><h1>Verify your<br /><span>email.</span></h1><p>We use a verified email to keep your Dhyavora workspace secure.</p><div className="story-foot"><div className="orbit-mark"><span>✦</span></div><span>{user?.email ?? "Your email"}<br />needs confirmation.</span></div></div>
       <div className="auth-orb orb-one" /><div className="auth-orb orb-two" />
     </section>
     <section className="auth-panel"><div className="auth-form-wrap">
-      <div className="mobile-brand"><Brand /></div>
-      <div className="eyebrow muted">YOUR CAREER WORKSPACE</div><h2>{setupRequired ? "Connect your identity" : mode === "login" ? "Welcome back." : "Start with a clear path."}</h2>
-      <p className="muted-copy">{setupRequired ? "Secure sign-in is temporarily unavailable. Please try again shortly." : mode === "login" ? "Sign in to pick up where your growth left off." : "Create your Dhyavora account and begin with your goals."}</p>
-      {setupRequired ? <div className="setup-note"><ShieldAlert size={18} /><div><strong>Setup required</strong><span>Auth is intentionally unavailable until Firebase is connected. No demo account is provided.</span></div></div> : <>
-        <form onSubmit={submit} className="stack-form"><label>Email address<input autoComplete="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required /></label><label>Password<input autoComplete={mode === "login" ? "current-password" : "new-password"} type="password" minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" required /></label>{error && <div className="inline-error">{error}</div>}<button className="button button-primary wide" disabled={busy}>{busy ? "Please wait…" : mode === "login" ? "Sign in" : "Create account"}<ArrowRight size={16} /></button></form>
-        <div className="auth-switch">{mode === "login" ? "New to Dhyavora?" : "Already have an account?"}<button onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); }}>{mode === "login" ? "Create account" : "Sign in"}</button></div>
-      </>}
-      <p className="privacy-note"><ShieldAlert size={13} /> Your career data stays yours. Authentication is verified by Firebase.</p>
+      <div className="mobile-brand"><Brand /></div><div className="eyebrow muted">CHECK YOUR INBOX</div><h2>Confirm your email.</h2><p className="muted-copy">Open the verification email we sent, then come back and continue to your workspace.</p>
+      {message && <div className="success-banner">{message}</div>}{error && <div className="inline-error">{error}</div>}
+      <div className="auth-actions-stack"><button className="button button-primary wide" disabled={busy} onClick={checkVerification}>{busy ? "Checking…" : "I’ve verified my email"}<ArrowRight size={16} /></button><button className="button button-soft wide" disabled={busy} onClick={resend}>Resend verification email</button><button className="auth-secondary" onClick={() => logOut()}>Use a different account</button></div>
+      <p className="privacy-note"><ShieldAlert size={13} /> Your account stays private while verification is pending.</p>
     </div></section>
   </main>;
 }
